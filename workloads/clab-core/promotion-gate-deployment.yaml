@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: promotion-gate
+  namespace: clab-core
+  labels:
+    app.kubernetes.io/name: promotion-gate
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: promotion-gate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: promotion-gate
+    spec:
+      containers:
+        - name: promotion-gate
+          image: clab-trade/promotion-gate:v0.1.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: CLAB_ENV
+              value: staging
+            - name: CLAB_VENUE
+              value: binance
+            - name: PROMOTION_GATE_HTTP_ADDR
+              value: :8093
+            - name: PROMOTION_GATE_POSTGRES_DSN
+              value: postgres://postgres:postgres@postgres.clab-data.svc.cluster.local:5432/clab_trade?sslmode=disable
+            - name: PROMOTION_GATE_NATS_URL
+              value: nats://nats.clab-system.svc.cluster.local:4222
+          ports:
+            - name: http
+              containerPort: 8093
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false

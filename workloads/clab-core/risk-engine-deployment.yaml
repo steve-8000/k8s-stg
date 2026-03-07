@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: risk-engine
+  namespace: clab-core
+  labels:
+    app.kubernetes.io/name: risk-engine
+    app.kubernetes.io/instance: risk-engine-stg
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: risk-engine
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: risk-engine
+        app.kubernetes.io/instance: risk-engine-stg
+    spec:
+      containers:
+        - name: risk-engine
+          image: clab-trade/risk-engine:v0.1.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: CLAB_ENV
+              value: staging
+            - name: CLAB_VENUE
+              value: binance
+            - name: RISK_ENGINE_HTTP_ADDR
+              value: :8086
+            - name: RISK_ENGINE_NATS_URL
+              value: nats://nats.clab-system.svc.cluster.local:4222
+            - name: RISK_ENGINE_SOURCE_STREAM
+              value: EXECUTION_DATA
+            - name: RISK_ENGINE_DECISION_STREAM
+              value: RISK_DATA
+            - name: RISK_ENGINE_CONSUMER
+              value: risk-engine
+          ports:
+            - name: http
+              containerPort: 8086
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false

@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CLAB Trade Control System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <div class="backdrop"></div>
+    <div class="noise"></div>
+    <main class="shell control-shell">
+      <header class="topbar panel">
+        <div>
+          <p class="eyebrow">trade.clab.one</p>
+          <div class="brand-row">
+            <h1>CLAB Trade</h1>
+            <span class="badge static-badge">operator control system</span>
+          </div>
+          <p class="lead compact-lead">Query snapshot, governed command posture, and realtime observation are shown separately so operators can see stale or ambiguous state instead of hidden smoothing.</p>
+        </div>
+        <div class="topbar-meta">
+          <div class="meta-chip"><span class="meta-label">environment</span><strong id="env-chip">staging</strong></div>
+          <div class="meta-chip"><span class="meta-label">venue</span><strong id="venue-chip">binance</strong></div>
+          <div class="meta-chip pulse-chip"><span class="pulse-dot"></span><span id="poll-state">connecting realtime</span></div>
+          <div class="meta-chip"><span class="meta-label">freshness</span><strong id="freshness-chip">--</strong></div>
+          <div class="meta-chip"><span class="meta-label">kill switch</span><strong id="kill-switch-chip">DEGRADED</strong></div>
+          <div class="auth-chip">
+            <div class="auth-chip-head">
+              <span class="meta-label">session</span>
+              <strong id="auth-session-state">locked</strong>
+            </div>
+            <div class="auth-chip-form">
+              <input id="auth-username-input" type="text" placeholder="operator">
+              <input id="auth-password-input" type="password" placeholder="password">
+              <button id="auth-login-button" type="button">Sign in</button>
+              <button id="auth-logout-button" type="button">Sign out</button>
+            </div>
+            <p class="auth-chip-detail" id="auth-session-detail">Sign in to unlock protected queries.</p>
+          </div>
+        </div>
+      </header>
+
+      <section class="banner-panel panel" id="stale-banner">
+        <strong id="stale-banner-title">Realtime syncing</strong>
+        <p id="stale-banner-copy">Dashboard is waiting for the first Query API snapshot and realtime update stream.</p>
+      </section>
+
+      <section class="control-grid">
+        <aside class="rail rail-left panel">
+          <div class="rail-section">
+            <div class="panel-header"><div><p class="section-kicker">Control and health</p><h3>Account health</h3></div><span class="badge" id="account-health-badge">loading</span></div>
+            <div class="data-list" id="account-health-list"></div>
+          </div>
+          <div class="rail-section">
+            <div class="panel-header"><div><p class="section-kicker">Strategy runtime</p><h3>Promotion and signal posture</h3></div><span class="badge" id="strategy-runtime-badge">loading</span></div>
+            <div class="data-list" id="strategy-runtime-list"></div>
+          </div>
+          <div class="rail-section">
+            <div class="panel-header"><div><p class="section-kicker">Incident center</p><h3>Unresolved events</h3></div><span class="badge" id="incident-badge">0 open</span></div>
+            <div class="data-list" id="incident-list"></div>
+          </div>
+          <div class="rail-section">
+            <div class="panel-header"><div><p class="section-kicker">Approval queue</p><h3>Governed commands</h3></div><span class="badge" id="approval-badge">review</span></div>
+            <div class="command-stack">
+              <button class="command-button" type="button" data-command="start">Start strategy</button>
+              <button class="command-button" type="button" data-command="pause">Pause strategy</button>
+              <button class="command-button" type="button" data-command="reconcile">Request reconciliation</button>
+              <button class="command-button danger" type="button" data-command="flatten">Flatten positions</button>
+              <button class="command-button danger" type="button" data-command="kill-switch">Arm kill switch</button>
+            </div>
+            <p class="command-observed" id="command-observed">Observed state: waiting for command submission.</p>
+          </div>
+        </aside>
+
+        <section class="rail rail-center panel">
+          <div class="rail-section">
+            <div class="panel-header"><div><p class="section-kicker">Lifecycle and blotter</p><h3>Order lineage</h3></div><span class="badge" id="orders-badge">0 rows</span></div>
+            <div class="table-wrap"><table class="data-table"><thead><tr><th>Order</th><th>Signal</th><th>State</th><th>Pending</th></tr></thead><tbody id="orders-table-body"></tbody></table></div>
+          </div>
+          <div class="rail-section detail-surface">
+            <div class="panel-header"><div><p class="section-kicker">Selected order</p><h3>Timeline and truth split</h3></div><span class="badge" id="order-detail-badge">idle</span></div>
+            <div class="detail-grid dual-detail">
+              <div><dt>Lifecycle</dt><dd id="order-detail-timeline">No order selected</dd></div>
+              <div><dt>Execution truth</dt><dd id="order-detail-execution">No order selected</dd></div>
+              <div><dt>Portfolio truth</dt><dd id="order-detail-portfolio">No order selected</dd></div>
+              <div><dt>Reconciliation</dt><dd id="order-detail-recon">No order selected</dd></div>
+            </div>
+          </div>
+          <div class="rail-section tabbed-surface">
+            <div class="panel-header"><div><p class="section-kicker">Workbench tabs</p><h3>Signals, reconciliation, strategy</h3></div><span class="badge" id="tab-badge">snapshot</span></div>
+            <div class="tab-grid">
+              <div class="tab-card"><strong>Signals</strong><p id="signals-tab-copy">Waiting for strategy data.</p></div>
+              <div class="tab-card"><strong>Reconciliation</strong><p id="recon-tab-copy">Waiting for reconciliation status.</p></div>
+              <div class="tab-card"><strong>Strategy</strong><p id="strategy-tab-copy">Waiting for promotion gate decisions.</p></div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="rail rail-right panel">
+          <div class="rail-section">
+            <div class="panel-header"><div><p class="section-kicker">Positions and risk</p><h3>Risk badge bar</h3></div><span class="badge" id="risk-badge">watch</span></div>
+            <div class="badge-bar" id="risk-badge-bar"></div>
+          </div>
+          <div class="rail-section">
+            <div class="panel-header"><div><p class="section-kicker">Open positions</p><h3>Live position risk</h3></div><span class="badge" id="positions-badge">0 positions</span></div>
+            <div class="table-wrap"><table class="data-table"><thead><tr><th>Symbol</th><th>Qty</th><th>PnL</th><th>Risk</th></tr></thead><tbody id="positions-table-body"></tbody></table></div>
+          </div>
+          <div class="rail-section">
+            <div class="panel-header"><div><p class="section-kicker">Context actions</p><h3>Desired vs observed</h3></div><span class="badge" id="context-badge">idle</span></div>
+            <div class="data-list" id="context-actions-list"></div>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <dialog id="command-dialog" class="command-dialog">
+      <form method="dialog" class="command-dialog-form">
+        <h3 id="command-dialog-title">Confirm action</h3>
+        <p id="command-dialog-body">Review the requested action.</p>
+        <label>
+          <span>Reason</span>
+          <input id="command-reason-input" type="text" placeholder="Required for high-risk actions">
+        </label>
+        <menu>
+          <button type="submit" value="cancel">Cancel</button>
+          <button type="submit" value="confirm" id="command-confirm-button">Submit</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

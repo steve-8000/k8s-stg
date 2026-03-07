@@ -10,7 +10,7 @@ data:
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>CLAB Trade Operations Console</title>
+        <title>CLAB Trade Control System</title>
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -19,310 +19,148 @@ data:
       <body>
         <div class="backdrop"></div>
         <div class="noise"></div>
-        <main class="shell">
+        <main class="shell control-shell">
           <header class="topbar panel">
             <div>
               <p class="eyebrow">trade.clab.one</p>
               <div class="brand-row">
                 <h1>CLAB Trade</h1>
-                <span class="badge static-badge">internal ops console</span>
+                <span class="badge static-badge">operator control system</span>
               </div>
+              <p class="lead compact-lead">Query snapshot, governed command posture, and realtime observation are shown separately so operators can see stale or ambiguous state instead of hidden smoothing.</p>
             </div>
             <div class="topbar-meta">
-              <div class="meta-chip">
-                <span class="meta-label">environment</span>
-                <strong>staging</strong>
-              </div>
-              <div class="meta-chip">
-                <span class="meta-label">venue</span>
-                <strong>binance futures</strong>
-              </div>
-              <div class="meta-chip pulse-chip">
-                <span class="pulse-dot"></span>
-                <span id="poll-state">polling readiness</span>
+              <div class="meta-chip"><span class="meta-label">environment</span><strong id="env-chip">staging</strong></div>
+              <div class="meta-chip"><span class="meta-label">venue</span><strong id="venue-chip">binance</strong></div>
+              <div class="meta-chip pulse-chip"><span class="pulse-dot"></span><span id="poll-state">connecting realtime</span></div>
+              <div class="meta-chip"><span class="meta-label">freshness</span><strong id="freshness-chip">--</strong></div>
+              <div class="meta-chip"><span class="meta-label">kill switch</span><strong id="kill-switch-chip">DEGRADED</strong></div>
+              <div class="auth-chip">
+                <div class="auth-chip-head">
+                  <span class="meta-label">session</span>
+                  <strong id="auth-session-state">locked</strong>
+                </div>
+                <div class="auth-chip-form">
+                  <input id="auth-username-input" type="text" placeholder="operator">
+                  <input id="auth-password-input" type="password" placeholder="password">
+                  <button id="auth-login-button" type="button">Sign in</button>
+                  <button id="auth-step-up-button" type="button">Step up</button>
+                  <button id="auth-logout-button" type="button">Sign out</button>
+                </div>
+                <p class="auth-chip-detail" id="auth-session-detail">Sign in to unlock protected queries.</p>
+                <div class="data-list auth-permissions-list" id="auth-permissions-list"></div>
               </div>
             </div>
           </header>
-
-          <section class="hero panel">
-            <div class="hero-copy">
-              <p class="section-kicker">Operational overview</p>
-              <h2>Trading operations remain observable while execution stays intentionally blocked.</h2>
-              <p class="lead">
-                This console tracks public edge readiness for market data, feature computation, and strategy services,
-                then lays out the operational surfaces the desk will use once portfolio, proposal, and execution adapters
-                are connected. Missing systems are shown plainly instead of simulated.
-              </p>
-            </div>
-            <div class="hero-aside">
-              <div class="hero-summary">
-                <span class="section-kicker">Platform posture</span>
-                <strong id="platform-status">Polling services</strong>
-                <p id="platform-summary">Waiting for readiness checks from the public edge.</p>
-              </div>
-              <div class="metric-grid">
-                <div class="metric-card">
-                  <span class="metric-label">last poll</span>
-                  <strong id="timestamp">checking</strong>
-                </div>
-                <div class="metric-card">
-                  <span class="metric-label">services ready</span>
-                  <strong id="healthy-count">0 / 3</strong>
-                </div>
-                <div class="metric-card">
-                  <span class="metric-label">degraded</span>
-                  <strong id="degraded-count">3</strong>
-                </div>
-                <div class="metric-card caution-card">
-                  <span class="metric-label">execution state</span>
-                  <strong>blocked by guardrail</strong>
-                </div>
-              </div>
-            </div>
+    
+          <section class="banner-panel panel" id="stale-banner">
+            <strong id="stale-banner-title">Realtime syncing</strong>
+            <p id="stale-banner-copy">Dashboard is waiting for the first Query API snapshot and realtime update stream.</p>
           </section>
-
-          <section class="dashboard-grid">
-            <article class="panel panel-span-8">
-              <div class="panel-header">
-                <div>
-                  <p class="section-kicker">Service health</p>
-                  <h3>Public readiness matrix</h3>
-                </div>
-                <span class="badge section-badge">edge checks</span>
+    
+          <section class="control-grid">
+            <aside class="rail rail-left panel">
+              <div class="rail-section">
+                <div class="panel-header"><div><p class="section-kicker">Control and health</p><h3>Account health</h3></div><span class="badge" id="account-health-badge">loading</span></div>
+                <div class="data-list" id="account-health-list"></div>
               </div>
-              <div class="service-grid">
-                <section class="service-card" id="market-data-card">
-                  <div class="service-head">
-                    <div>
-                      <p class="service-name">Market data</p>
-                      <p class="service-role">Ingress and normalization</p>
-                    </div>
-                    <span class="badge is-checking" id="market-data-badge">checking</span>
-                  </div>
-                  <p class="service-status" id="market-data-status">Waiting for service response.</p>
-                  <dl class="detail-grid">
-                    <div>
-                      <dt>endpoint</dt>
-                      <dd>/api/market-data/readyz</dd>
-                    </div>
-                    <div>
-                      <dt>scope</dt>
-                      <dd>market ingress</dd>
-                    </div>
-                  </dl>
-                </section>
-
-                <section class="service-card" id="feature-pipeline-card">
-                  <div class="service-head">
-                    <div>
-                      <p class="service-name">Feature pipeline</p>
-                      <p class="service-role">Transform and enrich</p>
-                    </div>
-                    <span class="badge is-checking" id="feature-pipeline-badge">checking</span>
-                  </div>
-                  <p class="service-status" id="feature-pipeline-status">Waiting for service response.</p>
-                  <dl class="detail-grid">
-                    <div>
-                      <dt>endpoint</dt>
-                      <dd>/api/feature-pipeline/readyz</dd>
-                    </div>
-                    <div>
-                      <dt>scope</dt>
-                      <dd>derived features</dd>
-                    </div>
-                  </dl>
-                </section>
-
-                <section class="service-card" id="strategy-engine-card">
-                  <div class="service-head">
-                    <div>
-                      <p class="service-name">Strategy engine</p>
-                      <p class="service-role">Signal generation</p>
-                    </div>
-                    <span class="badge is-checking" id="strategy-engine-badge">checking</span>
-                  </div>
-                  <p class="service-status" id="strategy-engine-status">Waiting for service response.</p>
-                  <dl class="detail-grid">
-                    <div>
-                      <dt>endpoint</dt>
-                      <dd>/api/strategy-engine/readyz</dd>
-                    </div>
-                    <div>
-                      <dt>scope</dt>
-                      <dd>proposal logic</dd>
-                    </div>
-                  </dl>
-                </section>
+              <div class="rail-section">
+                <div class="panel-header"><div><p class="section-kicker">Strategy runtime</p><h3>Promotion and signal posture</h3></div><span class="badge" id="strategy-runtime-badge">loading</span></div>
+                <div class="data-list" id="strategy-runtime-list"></div>
               </div>
-            </article>
-
-            <article class="panel panel-span-4 panel-tint">
-              <div class="panel-header">
-                <div>
-                  <p class="section-kicker">Portfolio management</p>
-                  <h3>Ledger and risk posture</h3>
-                </div>
-                <span class="badge section-badge">not connected</span>
+              <div class="rail-section">
+                <div class="panel-header"><div><p class="section-kicker">Incident center</p><h3>Unresolved events</h3></div><span class="badge" id="incident-badge">0 open</span></div>
+                <div class="data-list" id="incident-list"></div>
               </div>
-              <p class="panel-copy" id="portfolio-status">
-                Portfolio balances, position inventory, and risk limits are not yet exposed on this edge.
-              </p>
-              <div class="stack-list">
-                <div class="list-row">
-                  <span>Position ledger</span>
-                  <strong>awaiting portfolio service</strong>
+              <div class="rail-section">
+                <div class="panel-header"><div><p class="section-kicker">Approval queue</p><h3>Proposal review</h3></div><span class="badge" id="approval-badge">loading</span></div>
+                <div class="data-list" id="proposal-queue-list"></div>
+                <label class="command-form-field">
+                  <span>Review reason</span>
+                  <input id="proposal-reason-input" type="text" placeholder="Required for reject, optional for hold">
+                </label>
+                <div class="command-stack compact-stack">
+                  <button class="command-button" type="button" id="proposal-approve-button">Approve</button>
+                  <button class="command-button" type="button" id="proposal-hold-button">Hold</button>
+                  <button class="command-button danger" type="button" id="proposal-reject-button">Reject</button>
                 </div>
-                <div class="list-row">
-                  <span>Margin and collateral</span>
-                  <strong>not connected</strong>
+                <p class="command-observed" id="proposal-review-state">No proposal selected.</p>
+              </div>
+              <div class="rail-section">
+                <div class="panel-header"><div><p class="section-kicker">Review audit</p><h3>Recent decisions</h3></div><span class="badge" id="proposal-history-badge">0 items</span></div>
+                <div class="data-list" id="proposal-history-list"></div>
+              </div>
+              <div class="rail-section">
+                <div class="panel-header"><div><p class="section-kicker">Emergency controls</p><h3>Governed commands</h3></div><span class="badge">observed</span></div>
+                <div class="command-stack">
+                  <button class="command-button" type="button" data-command="start" disabled>Start strategy (planned)</button>
+                  <button class="command-button" type="button" data-command="pause" disabled>Pause strategy (planned)</button>
+                  <button class="command-button" type="button" data-command="reconcile" disabled>Request reconciliation (planned)</button>
+                  <button class="command-button danger" type="button" data-command="cancel-all">Cancel all</button>
+                  <button class="command-button danger" type="button" data-command="flatten">Flatten positions</button>
+                  <button class="command-button danger" type="button" data-command="kill-switch">Arm kill switch</button>
+                  <button class="command-button" type="button" data-command="kill-switch-release">Release kill switch</button>
                 </div>
-                <div class="list-row">
-                  <span>Exposure limits</span>
-                  <strong>manual review only</strong>
+                <p class="command-observed" id="command-observed">Observed state: waiting for command submission. These actions are wired to the current control-service intake path; downstream execution effects may still lag or remain observational.</p>
+              </div>
+            </aside>
+    
+            <section class="rail rail-center panel">
+              <div class="rail-section">
+                <div class="panel-header"><div><p class="section-kicker">Lifecycle and blotter</p><h3>Order lineage</h3></div><span class="badge" id="orders-badge">0 rows</span></div>
+                <div class="table-wrap"><table class="data-table"><thead><tr><th>Order</th><th>Signal</th><th>State</th><th>Pending</th></tr></thead><tbody id="orders-table-body"></tbody></table></div>
+              </div>
+              <div class="rail-section detail-surface">
+                <div class="panel-header"><div><p class="section-kicker">Selected order</p><h3>Timeline and truth split</h3></div><span class="badge" id="order-detail-badge">idle</span></div>
+                <div class="detail-grid dual-detail">
+                  <div><dt>Lifecycle</dt><dd id="order-detail-timeline">No order selected</dd></div>
+                  <div><dt>Execution truth</dt><dd id="order-detail-execution">No order selected</dd></div>
+                  <div><dt>Portfolio truth</dt><dd id="order-detail-portfolio">No order selected</dd></div>
+                  <div><dt>Reconciliation</dt><dd id="order-detail-recon">No order selected</dd></div>
                 </div>
               </div>
-            </article>
-
-            <article class="panel panel-span-4">
-              <div class="panel-header">
-                <div>
-                  <p class="section-kicker">Trading management</p>
-                  <h3>Release controls</h3>
-                </div>
-                <span class="badge is-blocked">blocked</span>
-              </div>
-              <p class="panel-copy" id="trading-status">
-                Order routing remains disabled until rotated credentials and bounded execution controls are published.
-              </p>
-              <div class="stack-list">
-                <div class="list-row">
-                  <span>Order entry</span>
-                  <strong>disabled</strong>
-                </div>
-                <div class="list-row">
-                  <span>Kill switch</span>
-                  <strong>engaged by default</strong>
-                </div>
-                <div class="list-row">
-                  <span>Venue route</span>
-                  <strong>closed pending secret rotation</strong>
+              <div class="rail-section tabbed-surface">
+                <div class="panel-header"><div><p class="section-kicker">Workbench tabs</p><h3>Signals, reconciliation, strategy</h3></div><span class="badge" id="tab-badge">snapshot</span></div>
+                <div class="tab-grid">
+                  <div class="tab-card"><strong>Signals</strong><p id="signals-tab-copy">Waiting for strategy data.</p></div>
+                  <div class="tab-card"><strong>Reconciliation</strong><p id="recon-tab-copy">Waiting for reconciliation status.</p></div>
+                  <div class="tab-card"><strong>Strategy</strong><p id="strategy-tab-copy">Waiting for promotion gate decisions.</p></div>
                 </div>
               </div>
-            </article>
-
-            <article class="panel panel-span-4">
-              <div class="panel-header">
-                <div>
-                  <p class="section-kicker">Proposals and signals</p>
-                  <h3>Decision flow</h3>
-                </div>
-                <span class="badge section-badge" id="signal-badge">awaiting data</span>
+            </section>
+    
+            <aside class="rail rail-right panel">
+              <div class="rail-section">
+                <div class="panel-header"><div><p class="section-kicker">Positions and risk</p><h3>Risk badge bar</h3></div><span class="badge" id="risk-badge">watch</span></div>
+                <div class="badge-bar" id="risk-badge-bar"></div>
               </div>
-              <p class="panel-copy" id="signal-status">
-                Proposal review remains unavailable until strategy output is published into a reviewable feed.
-              </p>
-              <div class="stack-list">
-                <div class="list-row">
-                  <span>Signal queue</span>
-                  <strong id="signal-posture">not connected</strong>
-                </div>
-                <div class="list-row">
-                  <span>Analyst approval</span>
-                  <strong>manual workflow absent</strong>
-                </div>
-                <div class="list-row">
-                  <span>Distribution channel</span>
-                  <strong>awaiting adapter</strong>
-                </div>
+              <div class="rail-section">
+                <div class="panel-header"><div><p class="section-kicker">Open positions</p><h3>Live position risk</h3></div><span class="badge" id="positions-badge">0 positions</span></div>
+                <div class="table-wrap"><table class="data-table"><thead><tr><th>Symbol</th><th>Qty</th><th>PnL</th><th>Risk</th></tr></thead><tbody id="positions-table-body"></tbody></table></div>
               </div>
-            </article>
-
-            <article class="panel panel-span-4 panel-tint">
-              <div class="panel-header">
-                <div>
-                  <p class="section-kicker">Fills and execution</p>
-                  <h3>Broker acknowledgements</h3>
-                </div>
-                <span class="badge is-blocked">awaiting execution service</span>
+              <div class="rail-section">
+                <div class="panel-header"><div><p class="section-kicker">Context actions</p><h3>Desired vs observed</h3></div><span class="badge" id="context-badge">idle</span></div>
+                <div class="data-list" id="context-actions-list"></div>
               </div>
-              <p class="panel-copy" id="execution-status">
-                No execution endpoint is currently published from the edge, so live orders, fills, and reject messages are unavailable.
-              </p>
-              <div class="stack-list">
-                <div class="list-row">
-                  <span>Order blotter</span>
-                  <strong>empty by design</strong>
-                </div>
-                <div class="list-row">
-                  <span>Exchange acknowledgements</span>
-                  <strong>not connected</strong>
-                </div>
-                <div class="list-row">
-                  <span>Fill archive</span>
-                  <strong>awaiting bounded execution plane</strong>
-                </div>
-              </div>
-            </article>
-
-            <article class="panel panel-span-8">
-              <div class="panel-header">
-                <div>
-                  <p class="section-kicker">System monitoring</p>
-                  <h3>Platform visibility</h3>
-                </div>
-                <span class="badge section-badge">ops telemetry</span>
-              </div>
-              <p class="panel-copy" id="monitoring-status">
-                Public edge checks update on a fixed polling cadence. Additional telemetry can be surfaced here once log, queue, and deployment signals are published.
-              </p>
-              <div class="monitor-grid">
-                <div class="monitor-card">
-                  <span class="metric-label">public edge</span>
-                  <strong id="edge-status">waiting for checks</strong>
-                  <p>Readiness is measured from the same static site your operators will use.</p>
-                </div>
-                <div class="monitor-card">
-                  <span class="metric-label">poll cadence</span>
-                  <strong>15 seconds</strong>
-                  <p>Service checks keep the dashboard current without inventing unsupported APIs.</p>
-                </div>
-                <div class="monitor-card">
-                  <span class="metric-label">deployment surface</span>
-                  <strong>nginx configmap</strong>
-                  <p>Static assets mirror cleanly into the existing delivery path at rollout time.</p>
-                </div>
-              </div>
-            </article>
-
-            <article class="panel panel-span-12 guardrail-panel">
-              <div class="panel-header">
-                <div>
-                  <p class="section-kicker">Operational guardrails</p>
-                  <h3>Conditions for enabling execution</h3>
-                </div>
-                <span class="badge is-blocked">hard stop</span>
-              </div>
-              <div class="guardrail-grid">
-                <div class="guardrail-item">
-                  <span class="guardrail-index">01</span>
-                  <p>Replace compromised venue credentials and inject them through managed secrets only.</p>
-                </div>
-                <div class="guardrail-item">
-                  <span class="guardrail-index">02</span>
-                  <p>Publish a dedicated execution service with explicit trade-count, notional, and venue allowlist controls.</p>
-                </div>
-                <div class="guardrail-item">
-                  <span class="guardrail-index">03</span>
-                  <p>Expose portfolio and fill data before any routing path is opened so operators can verify state transitions.</p>
-                </div>
-                <div class="guardrail-item">
-                  <span class="guardrail-index">04</span>
-                  <p>Keep the desk on manual approval until proposal review, kill switch visibility, and audit logging are wired end to end.</p>
-                </div>
-              </div>
-            </article>
+            </aside>
           </section>
         </main>
+    
+        <dialog id="command-dialog" class="command-dialog">
+          <form method="dialog" class="command-dialog-form">
+            <h3 id="command-dialog-title">Confirm action</h3>
+            <p id="command-dialog-body">Review the requested action.</p>
+            <label>
+              <span>Reason</span>
+              <input id="command-reason-input" type="text" placeholder="Required for high-risk actions">
+            </label>
+            <menu>
+              <button type="submit" value="cancel">Cancel</button>
+              <button type="submit" value="confirm" id="command-confirm-button">Submit</button>
+            </menu>
+          </form>
+        </dialog>
+    
         <script src="./app.js"></script>
       </body>
     </html>
@@ -345,15 +183,15 @@ data:
       --danger: #ff7a5c;
       --shadow: 0 30px 80px rgba(0, 0, 0, 0.38);
     }
-
+    
     * {
       box-sizing: border-box;
     }
-
+    
     html {
       scroll-behavior: smooth;
     }
-
+    
     body {
       margin: 0;
       min-height: 100vh;
@@ -366,7 +204,7 @@ data:
         radial-gradient(circle at 50% 100%, rgba(69, 135, 110, 0.12), transparent 32%),
         linear-gradient(165deg, #08131d 0%, var(--bg-deep) 72%);
     }
-
+    
     body::before {
       content: "";
       position: fixed;
@@ -374,14 +212,14 @@ data:
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 18%, transparent 82%, rgba(255, 255, 255, 0.02));
       pointer-events: none;
     }
-
+    
     .backdrop,
     .noise {
       position: fixed;
       inset: 0;
       pointer-events: none;
     }
-
+    
     .backdrop {
       background-image:
         linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
@@ -390,20 +228,20 @@ data:
       mask-image: radial-gradient(circle at center, black 36%, transparent 88%);
       opacity: 0.5;
     }
-
+    
     .noise {
       opacity: 0.08;
       background-image: radial-gradient(rgba(255, 255, 255, 0.9) 0.5px, transparent 0.5px);
       background-size: 8px 8px;
     }
-
+    
     .shell {
       position: relative;
       width: min(1380px, calc(100vw - 32px));
       margin: 0 auto;
       padding: 24px 0 48px;
     }
-
+    
     .panel {
       position: relative;
       overflow: hidden;
@@ -412,7 +250,7 @@ data:
       background: linear-gradient(180deg, rgba(14, 27, 40, 0.94), rgba(8, 16, 24, 0.94));
       box-shadow: var(--shadow);
     }
-
+    
     .panel::after {
       content: "";
       position: absolute;
@@ -420,11 +258,11 @@ data:
       background: linear-gradient(135deg, rgba(255, 255, 255, 0.04), transparent 24%, transparent 76%, rgba(255, 255, 255, 0.03));
       pointer-events: none;
     }
-
+    
     .panel-tint {
       background: linear-gradient(180deg, rgba(16, 34, 49, 0.96), rgba(9, 18, 28, 0.94));
     }
-
+    
     .topbar {
       display: flex;
       align-items: flex-start;
@@ -432,7 +270,7 @@ data:
       gap: 24px;
       padding: 24px 28px;
     }
-
+    
     .eyebrow,
     .section-kicker,
     .badge,
@@ -445,7 +283,7 @@ data:
       font-family: "IBM Plex Mono", monospace;
       letter-spacing: 0.06em;
     }
-
+    
     .eyebrow,
     .section-kicker {
       margin: 0;
@@ -453,7 +291,7 @@ data:
       font-size: 0.74rem;
       text-transform: uppercase;
     }
-
+    
     .brand-row {
       display: flex;
       align-items: center;
@@ -461,41 +299,41 @@ data:
       margin-top: 8px;
       flex-wrap: wrap;
     }
-
+    
     h1,
     h2,
     h3,
     p {
       margin: 0;
     }
-
+    
     h1 {
       font-size: clamp(2rem, 4vw, 3.2rem);
       line-height: 0.95;
       letter-spacing: -0.04em;
     }
-
+    
     h2 {
       max-width: 12ch;
       font-size: clamp(2.1rem, 5vw, 4.4rem);
       line-height: 0.95;
       letter-spacing: -0.05em;
     }
-
+    
     h3 {
       margin-top: 10px;
       font-size: 1.3rem;
       line-height: 1.05;
       letter-spacing: -0.03em;
     }
-
+    
     .topbar-meta {
       display: flex;
       flex-wrap: wrap;
       justify-content: flex-end;
       gap: 12px;
     }
-
+    
     .meta-chip,
     .metric-card,
     .monitor-card,
@@ -504,7 +342,7 @@ data:
       border: 1px solid var(--line);
       background: rgba(255, 255, 255, 0.025);
     }
-
+    
     .meta-chip {
       display: inline-flex;
       align-items: center;
@@ -514,23 +352,95 @@ data:
       border-radius: 999px;
       color: var(--muted-strong);
     }
-
+    
     .meta-chip strong {
       font-size: 0.92rem;
       font-weight: 600;
     }
-
+    
+    .auth-chip {
+      min-width: min(100%, 360px);
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.03);
+    }
+    
+    .auth-chip-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    
+    .auth-chip-head strong {
+      font-size: 0.92rem;
+    }
+    
+    .auth-chip-form {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+    
+    .auth-chip-form input,
+    .auth-chip-form button {
+      width: 100%;
+      min-height: 40px;
+      border-radius: 12px;
+      border: 1px solid var(--line-strong);
+      background: rgba(7, 15, 24, 0.92);
+      color: var(--text);
+      padding: 0 12px;
+      font: inherit;
+    }
+    
+    .auth-chip-form button {
+      cursor: pointer;
+      background: rgba(139, 184, 255, 0.16);
+    }
+    
+    .auth-chip-form button:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+    
+    .auth-chip-detail {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 0.86rem;
+      line-height: 1.4;
+    }
+    
+    .auth-permissions-list {
+      margin-top: 12px;
+    }
+    
+    .control-form {
+      margin-top: 18px;
+    }
+    
+    .control-actions {
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+    
+    .control-actions button {
+      min-width: 132px;
+    }
+    
     .meta-label,
     .metric-label {
       color: var(--muted);
       font-size: 0.7rem;
       text-transform: uppercase;
     }
-
+    
     .pulse-chip {
       background: rgba(77, 211, 167, 0.08);
     }
-
+    
     .pulse-dot {
       width: 9px;
       height: 9px;
@@ -538,7 +448,7 @@ data:
       background: var(--ok);
       box-shadow: 0 0 16px rgba(77, 211, 167, 0.8);
     }
-
+    
     .hero {
       display: grid;
       grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.95fr);
@@ -546,7 +456,7 @@ data:
       margin-top: 18px;
       padding: 30px;
     }
-
+    
     .hero-copy {
       display: flex;
       flex-direction: column;
@@ -554,7 +464,7 @@ data:
       min-height: 320px;
       padding-right: 20px;
     }
-
+    
     .lead,
     .panel-copy,
     .service-status,
@@ -563,19 +473,19 @@ data:
       color: var(--muted);
       line-height: 1.7;
     }
-
+    
     .lead {
       max-width: 60ch;
       margin-top: 22px;
       font-size: 1rem;
     }
-
+    
     .hero-aside {
       display: grid;
       gap: 16px;
       align-content: stretch;
     }
-
+    
     .hero-summary {
       display: flex;
       flex-direction: column;
@@ -586,13 +496,13 @@ data:
       border: 1px solid var(--line-strong);
       background: linear-gradient(180deg, rgba(20, 41, 58, 0.95), rgba(10, 21, 31, 0.95));
     }
-
+    
     .hero-summary strong {
       font-size: clamp(1.6rem, 3vw, 2.4rem);
       line-height: 1;
       letter-spacing: -0.04em;
     }
-
+    
     .metric-grid,
     .monitor-grid,
     .guardrail-grid,
@@ -601,17 +511,17 @@ data:
       display: grid;
       gap: 16px;
     }
-
+    
     .metric-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-
+    
     .metric-card {
       min-height: 108px;
       padding: 18px;
       border-radius: 22px;
     }
-
+    
     .metric-card strong,
     .monitor-card strong {
       display: block;
@@ -620,34 +530,34 @@ data:
       line-height: 1.15;
       letter-spacing: -0.03em;
     }
-
+    
     .caution-card {
       background: linear-gradient(180deg, rgba(45, 31, 13, 0.86), rgba(24, 16, 9, 0.94));
     }
-
+    
     .dashboard-grid {
       grid-template-columns: repeat(12, minmax(0, 1fr));
       margin-top: 18px;
     }
-
+    
     .panel-span-4,
     .panel-span-8,
     .panel-span-12 {
       padding: 24px;
     }
-
+    
     .panel-span-4 {
       grid-column: span 4;
     }
-
+    
     .panel-span-8 {
       grid-column: span 8;
     }
-
+    
     .panel-span-12 {
       grid-column: span 12;
     }
-
+    
     .panel-header,
     .service-head,
     .list-row {
@@ -656,22 +566,22 @@ data:
       justify-content: space-between;
       gap: 14px;
     }
-
+    
     .panel-copy {
       margin-top: 16px;
     }
-
+    
     .service-grid {
       grid-template-columns: repeat(3, minmax(0, 1fr));
       margin-top: 18px;
     }
-
+    
     .service-card {
       position: relative;
       padding: 20px;
       border-radius: 22px;
     }
-
+    
     .service-card::before {
       content: "";
       position: absolute;
@@ -679,124 +589,304 @@ data:
       width: 3px;
       background: rgba(255, 255, 255, 0.08);
     }
-
+    
     .service-card.ready::before {
       background: var(--ok);
     }
-
+    
     .service-card.degraded::before {
       background: var(--warn);
     }
-
+    
     .service-name {
       color: var(--muted-strong);
       font-size: 0.78rem;
       text-transform: uppercase;
     }
-
+    
     .service-role {
       margin-top: 8px;
       color: var(--muted);
       font-size: 0.72rem;
       text-transform: uppercase;
     }
-
+    
     .service-status {
       margin-top: 18px;
       min-height: 72px;
     }
-
+    
     .detail-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 14px;
       margin-top: 18px;
     }
-
+    
     .detail-grid div {
       padding-top: 12px;
       border-top: 1px solid var(--line);
     }
-
+    
     .detail-grid dt {
       color: var(--muted);
       font-size: 0.68rem;
       text-transform: uppercase;
     }
-
+    
     .detail-grid dd {
       margin: 8px 0 0;
       color: var(--muted-strong);
       font-size: 0.92rem;
     }
-
+    
     .stack-list {
       display: grid;
       gap: 10px;
       margin-top: 20px;
     }
-
+    
+    .proposal-console {
+      display: grid;
+      gap: 16px;
+      margin-top: 20px;
+    }
+    
+    .proposal-list {
+      display: grid;
+      gap: 10px;
+    }
+    
+    .proposal-list-item,
+    .proposal-actions button,
+    .proposal-form input {
+      font: inherit;
+    }
+    
+    .proposal-list-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--muted-strong);
+      cursor: pointer;
+    }
+    
+    .proposal-list-item.is-selected {
+      border-color: rgba(139, 184, 255, 0.4);
+      background: rgba(139, 184, 255, 0.1);
+    }
+    
+    .proposal-empty,
+    .proposal-action-state,
+    .proposal-detail-copy {
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    
+    .proposal-detail {
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.025);
+    }
+    
+    .proposal-detail-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    
+    .proposal-meta {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+    
+    .proposal-meta div {
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+    }
+    
+    .proposal-meta dt {
+      color: var(--muted);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    
+    .proposal-meta dd {
+      margin: 8px 0 0;
+      color: var(--muted-strong);
+    }
+    
+    .proposal-form {
+      display: grid;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    
+    .proposal-form label {
+      display: grid;
+      gap: 8px;
+    }
+    
+    .proposal-form span {
+      color: var(--muted);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    
+    .proposal-form input {
+      width: 100%;
+      min-height: 44px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      color: var(--text);
+      background: rgba(6, 16, 24, 0.9);
+    }
+    
+    .proposal-actions {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 16px;
+    }
+    
+    .proposal-actions button {
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--muted-strong);
+      cursor: pointer;
+    }
+    
+    .proposal-actions button:first-child {
+      color: var(--ok);
+      border-color: rgba(77, 211, 167, 0.28);
+      background: rgba(77, 211, 167, 0.1);
+    }
+    
+    .proposal-actions button:nth-child(2) {
+      color: var(--warn);
+      border-color: rgba(255, 191, 102, 0.3);
+      background: rgba(255, 191, 102, 0.08);
+    }
+    
+    .proposal-actions button:last-child {
+      color: var(--danger);
+      border-color: rgba(255, 122, 92, 0.28);
+      background: rgba(255, 122, 92, 0.08);
+    }
+    
+    .proposal-actions button:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+    
+    .proposal-audit {
+      margin-top: 18px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+    }
+    
+    .proposal-audit-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    
+    .proposal-audit-item {
+      display: grid;
+      gap: 6px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.025);
+    }
+    
+    .proposal-audit-item strong {
+      color: var(--muted-strong);
+    }
+    
+    .proposal-audit-item span {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    
     .list-row {
       padding: 14px 0;
       border-bottom: 1px solid var(--line);
     }
-
+    
     .list-row:last-child {
       border-bottom: 0;
       padding-bottom: 0;
     }
-
+    
     .list-row span {
       color: var(--muted);
     }
-
+    
     .list-row strong {
       max-width: 15ch;
       text-align: right;
       font-size: 0.94rem;
       line-height: 1.4;
     }
-
+    
     .monitor-grid {
       grid-template-columns: repeat(3, minmax(0, 1fr));
       margin-top: 20px;
     }
-
+    
     .monitor-card {
       min-height: 164px;
       padding: 18px;
       border-radius: 22px;
     }
-
+    
     .monitor-card p {
       margin-top: 14px;
     }
-
+    
     .guardrail-panel {
       background: linear-gradient(180deg, rgba(30, 22, 14, 0.95), rgba(13, 10, 8, 0.96));
     }
-
+    
     .guardrail-grid {
       grid-template-columns: repeat(4, minmax(0, 1fr));
       margin-top: 20px;
     }
-
+    
     .guardrail-item {
       min-height: 180px;
       padding: 18px;
       border-radius: 22px;
     }
-
+    
     .guardrail-index {
       display: inline-flex;
       color: var(--warn);
       font-size: 0.78rem;
     }
-
+    
     .guardrail-item p {
       margin-top: 18px;
     }
-
+    
     .badge {
       display: inline-flex;
       align-items: center;
@@ -811,62 +901,62 @@ data:
       text-transform: uppercase;
       white-space: nowrap;
     }
-
+    
     .static-badge,
     .section-badge,
     .is-checking {
       background: rgba(255, 255, 255, 0.04);
     }
-
+    
     .is-ready {
       color: var(--ok);
       background: rgba(77, 211, 167, 0.12);
       border-color: rgba(77, 211, 167, 0.3);
     }
-
+    
     .is-degraded {
       color: var(--warn);
       background: rgba(255, 191, 102, 0.12);
       border-color: rgba(255, 191, 102, 0.3);
     }
-
+    
     .is-blocked {
       color: var(--danger);
       background: rgba(255, 122, 92, 0.12);
       border-color: rgba(255, 122, 92, 0.28);
     }
-
+    
     @media (max-width: 1180px) {
       .hero {
         grid-template-columns: 1fr;
       }
-
+    
       .hero-copy {
         min-height: auto;
         padding-right: 0;
       }
-
+    
       .panel-span-8,
       .panel-span-4 {
         grid-column: span 6;
       }
-
+    
       .guardrail-grid,
       .monitor-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
-
+    
       .service-grid {
         grid-template-columns: 1fr;
       }
     }
-
+    
     @media (max-width: 820px) {
       .shell {
         width: min(100vw - 20px, 1380px);
         padding-top: 12px;
       }
-
+    
       .panel,
       .hero-summary,
       .metric-card,
@@ -875,7 +965,7 @@ data:
       .guardrail-item {
         border-radius: 22px;
       }
-
+    
       .topbar,
       .hero,
       .panel-span-4,
@@ -883,222 +973,1005 @@ data:
       .panel-span-12 {
         padding: 20px;
       }
-
+    
       .topbar {
         flex-direction: column;
       }
-
+    
       .topbar-meta {
         justify-content: flex-start;
       }
-
+    
       .dashboard-grid,
       .metric-grid,
       .monitor-grid,
       .guardrail-grid {
         grid-template-columns: 1fr;
       }
-
+    
       .panel-span-4,
       .panel-span-8,
       .panel-span-12 {
         grid-column: span 12;
       }
-
+    
       .detail-grid {
         grid-template-columns: 1fr;
       }
     }
-
+    
     @media (max-width: 560px) {
       h1 {
         font-size: 1.8rem;
       }
-
+    
       h2 {
         font-size: 2rem;
       }
-
+    
       .brand-row {
         align-items: flex-start;
         flex-direction: column;
         gap: 10px;
       }
-
+    
       .meta-chip,
       .badge {
         width: 100%;
         justify-content: flex-start;
       }
-
+    
       .service-head,
       .panel-header,
       .list-row {
         flex-direction: column;
       }
-
+    
       .list-row strong {
         max-width: none;
         text-align: left;
       }
-
+    
       .metric-card,
       .monitor-card,
       .guardrail-item {
         min-height: auto;
       }
     }
+    
+    .control-shell {
+      padding-bottom: 32px;
+    }
+    
+    .compact-lead {
+      max-width: 58ch;
+      margin-top: 16px;
+    }
+    
+    .banner-panel {
+      margin-top: 18px;
+      padding: 18px 24px;
+      border-radius: 24px;
+    }
+    
+    .banner-panel.is-warning {
+      border-color: rgba(255, 191, 102, 0.35);
+      background: linear-gradient(180deg, rgba(47, 35, 15, 0.96), rgba(23, 16, 10, 0.96));
+    }
+    
+    .banner-panel strong {
+      display: block;
+      font-size: 1rem;
+    }
+    
+    .banner-panel p {
+      margin-top: 8px;
+      color: var(--muted);
+    }
+    
+    .control-grid {
+      display: grid;
+      grid-template-columns: minmax(260px, 0.22fr) minmax(460px, 0.5fr) minmax(300px, 0.28fr);
+      gap: 18px;
+      margin-top: 18px;
+    }
+    
+    .rail {
+      padding: 20px;
+    }
+    
+    .rail-section + .rail-section {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+    
+    .data-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    
+    .command-stack {
+      display: grid;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    
+    .command-button {
+      min-height: 44px;
+      border: 1px solid var(--line-strong);
+      border-radius: 14px;
+      background: rgba(139, 184, 255, 0.08);
+      color: var(--muted-strong);
+      font: inherit;
+      cursor: pointer;
+    }
+    
+    .command-button.danger {
+      border-color: rgba(255, 122, 92, 0.3);
+      background: rgba(255, 122, 92, 0.08);
+    }
+    
+    .command-button:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+      border-color: var(--line);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    
+    .compact-stack {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    
+    .command-form-field {
+      display: grid;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    
+    .command-form-field span {
+      color: var(--muted);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    
+    .command-form-field input {
+      width: 100%;
+      min-height: 44px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      color: var(--text);
+      background: rgba(6, 16, 24, 0.9);
+      font: inherit;
+    }
+    
+    .proposal-queue-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--muted-strong);
+      font: inherit;
+      cursor: pointer;
+    }
+    
+    .proposal-queue-item.is-selected {
+      border-color: rgba(139, 184, 255, 0.4);
+      background: rgba(139, 184, 255, 0.1);
+    }
+    
+    .proposal-queue-item strong {
+      font-size: 0.82rem;
+    }
+    
+    .review-history-item {
+      display: grid;
+      gap: 4px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.03);
+    }
+    
+    .review-history-item.is-selected {
+      border-color: rgba(139, 184, 255, 0.35);
+      background: rgba(139, 184, 255, 0.08);
+    }
+    
+    .review-history-item strong {
+      font-size: 0.84rem;
+    }
+    
+    .review-history-item small {
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    
+    .command-observed {
+      margin-top: 14px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    
+    .table-wrap {
+      margin-top: 16px;
+      overflow: auto;
+    }
+    
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+    }
+    
+    .data-table th,
+    .data-table td {
+      padding: 12px 10px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+    }
+    
+    .data-table th {
+      color: var(--muted);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+    }
+    
+    .data-table tbody tr {
+      cursor: pointer;
+    }
+    
+    .dual-detail {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    
+    .tab-grid {
+      display: grid;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    
+    .tab-card,
+    .risk-pill {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.025);
+    }
+    
+    .tab-card p,
+    .risk-pill span {
+      color: var(--muted);
+    }
+    
+    .tab-card p {
+      margin-top: 8px;
+      line-height: 1.6;
+    }
+    
+    .badge-bar {
+      display: grid;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    
+    .risk-pill strong {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted-strong);
+    }
+    
+    .command-dialog {
+      width: min(92vw, 520px);
+      border: 1px solid var(--line-strong);
+      border-radius: 24px;
+      background: linear-gradient(180deg, rgba(14, 27, 40, 0.98), rgba(8, 16, 24, 0.98));
+      color: var(--text);
+    }
+    
+    .command-dialog::backdrop {
+      background: rgba(3, 7, 13, 0.72);
+    }
+    
+    .command-dialog-form {
+      display: grid;
+      gap: 14px;
+      padding: 22px;
+    }
+    
+    .command-dialog-form label {
+      display: grid;
+      gap: 8px;
+    }
+    
+    .command-dialog-form input {
+      min-height: 44px;
+      border: 1px solid var(--line-strong);
+      border-radius: 14px;
+      background: rgba(6, 16, 24, 0.92);
+      color: var(--text);
+      padding: 0 12px;
+      font: inherit;
+    }
+    
+    .command-dialog menu {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin: 0;
+      padding: 0;
+    }
+    
+    .command-dialog button {
+      min-height: 42px;
+      padding: 0 16px;
+      border: 1px solid var(--line-strong);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--muted-strong);
+      font: inherit;
+    }
+    
+    @media (max-width: 1180px) {
+      .control-grid {
+        grid-template-columns: 1fr;
+      }
+    
+      .dual-detail {
+        grid-template-columns: 1fr;
+      }
+    }
   app.js: |
-    const services = [
-      { id: 'market-data', label: 'Market data' },
-      { id: 'feature-pipeline', label: 'Feature pipeline' },
-      { id: 'strategy-engine', label: 'Strategy engine' },
-    ];
-
-    const pollIntervalMs = 15000;
-
-    const elements = {
-      timestamp: document.getElementById('timestamp'),
-      platformStatus: document.getElementById('platform-status'),
-      platformSummary: document.getElementById('platform-summary'),
-      pollState: document.getElementById('poll-state'),
-      healthyCount: document.getElementById('healthy-count'),
-      degradedCount: document.getElementById('degraded-count'),
-      portfolioStatus: document.getElementById('portfolio-status'),
-      tradingStatus: document.getElementById('trading-status'),
-      signalBadge: document.getElementById('signal-badge'),
-      signalStatus: document.getElementById('signal-status'),
-      signalPosture: document.getElementById('signal-posture'),
-      executionStatus: document.getElementById('execution-status'),
-      monitoringStatus: document.getElementById('monitoring-status'),
-      edgeStatus: document.getElementById('edge-status'),
+    const authStorageKey = 'clab-auth-token';
+    let authToken = localStorage.getItem(authStorageKey) || '';
+    let authStepUp = false;
+    let authPermissions = [];
+    let realtimeSocket = null;
+    let commandIntent = null;
+    let latestOrders = [];
+    let latestProposalQueue = null;
+    let latestProposalReviews = null;
+    let selectedProposalId = null;
+    
+    const supportedControlCommands = {
+      'cancel-all': {
+        endpoint: '/api/control-service/execution/cancel-all',
+        label: 'cancel_all',
+      },
+      flatten: {
+        endpoint: '/api/control-service/execution/flatten',
+        label: 'flatten',
+      },
+      'kill-switch': {
+        endpoint: '/api/control-service/risk/kill-switch/arm',
+        label: 'kill_switch_arm',
+      },
+      'kill-switch-release': {
+        endpoint: '/api/control-service/risk/kill-switch/release',
+        label: 'kill_switch_release',
+      },
     };
-
-    pollReadiness();
-    window.setInterval(pollReadiness, pollIntervalMs);
-
-    async function pollReadiness() {
-      setPollTimestamp();
-      elements.pollState.textContent = 'polling readiness';
-
-      const results = await Promise.all(services.map(checkService));
-      updateDashboard(results);
+    
+    const requiredPermissionForCommand = {
+      'cancel-all': 'trading.cancel_all',
+      flatten: 'trading.flatten_positions',
+      'kill-switch': 'trading.kill_switch',
+      'kill-switch-release': 'trading.kill_switch',
+    };
+    
+    const elements = {
+      pollState: document.getElementById('poll-state'),
+      freshnessChip: document.getElementById('freshness-chip'),
+      killSwitchChip: document.getElementById('kill-switch-chip'),
+      staleBanner: document.getElementById('stale-banner'),
+      staleBannerTitle: document.getElementById('stale-banner-title'),
+      staleBannerCopy: document.getElementById('stale-banner-copy'),
+      accountHealthBadge: document.getElementById('account-health-badge'),
+      accountHealthList: document.getElementById('account-health-list'),
+      strategyRuntimeBadge: document.getElementById('strategy-runtime-badge'),
+      strategyRuntimeList: document.getElementById('strategy-runtime-list'),
+      incidentBadge: document.getElementById('incident-badge'),
+      incidentList: document.getElementById('incident-list'),
+      approvalBadge: document.getElementById('approval-badge'),
+      proposalQueueList: document.getElementById('proposal-queue-list'),
+      proposalReasonInput: document.getElementById('proposal-reason-input'),
+      proposalApproveButton: document.getElementById('proposal-approve-button'),
+      proposalHoldButton: document.getElementById('proposal-hold-button'),
+      proposalRejectButton: document.getElementById('proposal-reject-button'),
+      proposalReviewState: document.getElementById('proposal-review-state'),
+      proposalHistoryBadge: document.getElementById('proposal-history-badge'),
+      proposalHistoryList: document.getElementById('proposal-history-list'),
+      commandObserved: document.getElementById('command-observed'),
+      ordersBadge: document.getElementById('orders-badge'),
+      ordersTableBody: document.getElementById('orders-table-body'),
+      orderDetailBadge: document.getElementById('order-detail-badge'),
+      orderDetailTimeline: document.getElementById('order-detail-timeline'),
+      orderDetailExecution: document.getElementById('order-detail-execution'),
+      orderDetailPortfolio: document.getElementById('order-detail-portfolio'),
+      orderDetailRecon: document.getElementById('order-detail-recon'),
+      signalsTabCopy: document.getElementById('signals-tab-copy'),
+      reconTabCopy: document.getElementById('recon-tab-copy'),
+      strategyTabCopy: document.getElementById('strategy-tab-copy'),
+      riskBadge: document.getElementById('risk-badge'),
+      riskBadgeBar: document.getElementById('risk-badge-bar'),
+      positionsBadge: document.getElementById('positions-badge'),
+      positionsTableBody: document.getElementById('positions-table-body'),
+      contextBadge: document.getElementById('context-badge'),
+      contextActionsList: document.getElementById('context-actions-list'),
+      authSessionState: document.getElementById('auth-session-state'),
+      authSessionDetail: document.getElementById('auth-session-detail'),
+      authPermissionsList: document.getElementById('auth-permissions-list'),
+      authUsernameInput: document.getElementById('auth-username-input'),
+      authPasswordInput: document.getElementById('auth-password-input'),
+      authLoginButton: document.getElementById('auth-login-button'),
+      authStepUpButton: document.getElementById('auth-step-up-button'),
+      authLogoutButton: document.getElementById('auth-logout-button'),
+      commandDialog: document.getElementById('command-dialog'),
+      commandDialogTitle: document.getElementById('command-dialog-title'),
+      commandDialogBody: document.getElementById('command-dialog-body'),
+      commandReasonInput: document.getElementById('command-reason-input'),
+      commandConfirmButton: document.getElementById('command-confirm-button'),
+    };
+    
+    document.querySelectorAll('[data-command]').forEach((button) => {
+      button.addEventListener('click', () => openCommandDialog(button.dataset.command));
+    });
+    elements.authLoginButton.addEventListener('click', submitAuthLogin);
+    elements.authStepUpButton.addEventListener('click', submitAuthStepUp);
+    elements.authLogoutButton.addEventListener('click', clearAuthSession);
+    elements.commandDialog.addEventListener('close', handleCommandDialogClose);
+    elements.proposalApproveButton.addEventListener('click', () => submitProposalReview('approve'));
+    elements.proposalHoldButton.addEventListener('click', () => submitProposalReview('hold'));
+    elements.proposalRejectButton.addEventListener('click', () => submitProposalReview('reject'));
+    
+    bootstrap();
+    
+    async function bootstrap() {
+      await hydrateAuthSession();
+      updateAuthSessionUI();
+      await refreshDashboard();
+      connectRealtime();
+      window.setInterval(refreshDashboard, 15000);
     }
-
-    async function checkService(service) {
-      const badge = document.getElementById(`${service.id}-badge`);
-      const text = document.getElementById(`${service.id}-status`);
-      const card = document.getElementById(`${service.id}-card`);
-
-      try {
-        const response = await fetch(`/api/${service.id}/readyz`, { cache: 'no-store' });
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-
-        const payload = await response.json();
-        const status = payload.status || 'unknown';
-        const isReady = status === 'ready';
-        const checks = formatChecks(payload.checks);
-
-        badge.textContent = status;
-        badge.className = `badge ${isReady ? 'is-ready' : 'is-degraded'}`;
-        card.classList.toggle('ready', isReady);
-        card.classList.toggle('degraded', !isReady);
-        text.textContent = `${service.label} reports ${status}. ${checks}`;
-
-        return { id: service.id, label: service.label, status, ready: isReady };
-      } catch (error) {
-        badge.textContent = 'offline';
-        badge.className = 'badge is-degraded';
-        card.classList.remove('ready');
-        card.classList.add('degraded');
-        text.textContent = `${service.label} is unreachable from the public edge.`;
-
-        return { id: service.id, label: service.label, status: 'offline', ready: false };
+    
+    async function hydrateAuthSession() {
+      if (!authToken) {
+        return;
       }
+      const response = await fetch('/api/auth-service/auth/verify', { cache: 'no-store', headers: { Authorization: `Bearer ${authToken}` } }).catch(() => null);
+      if (!response || !response.ok) {
+        clearAuthSession(false);
+        return;
+      }
+      const payload = await response.json().catch(() => null);
+      authStepUp = payload?.step_up === true;
+      authPermissions = Array.isArray(payload?.permissions) ? payload.permissions : [];
     }
-
-    function updateDashboard(results) {
-      const readyCount = results.filter((result) => result.ready).length;
-      const degradedCount = results.length - readyCount;
-      const marketReady = isServiceReady(results, 'market-data');
-      const featureReady = isServiceReady(results, 'feature-pipeline');
-      const strategyReady = isServiceReady(results, 'strategy-engine');
-
-      elements.timestamp.textContent = formatTimestamp();
-      elements.healthyCount.textContent = `${readyCount} / ${results.length}`;
-      elements.degradedCount.textContent = String(degradedCount);
-
-      if (readyCount === results.length) {
-        elements.platformStatus.textContent = 'Core services ready';
-        elements.platformSummary.textContent = 'Market data, feature computation, and strategy readiness are all reporting healthy from the public edge. Execution remains blocked until a bounded execution plane is published.';
-        elements.edgeStatus.textContent = 'healthy across all published services';
-        elements.pollState.textContent = 'all published checks green';
-      } else if (readyCount > 0) {
-        elements.platformStatus.textContent = 'Partial readiness';
-        elements.platformSummary.textContent = `${readyCount} of ${results.length} published services are ready. Operators can observe the live plane, but downstream workflows should remain manual until degraded services recover.`;
-        elements.edgeStatus.textContent = 'degraded but partially observable';
-        elements.pollState.textContent = 'degraded services detected';
-      } else {
-        elements.platformStatus.textContent = 'Edge visibility degraded';
-        elements.platformSummary.textContent = 'None of the published readiness checks are responding from the public edge. Treat the console as a deployment shell until service health returns.';
-        elements.edgeStatus.textContent = 'no published services responding';
-        elements.pollState.textContent = 'waiting for service recovery';
-      }
-
-      if (marketReady || featureReady) {
-        elements.portfolioStatus.textContent = 'Market context is reachable, but portfolio balances, positions, and risk limits are still not exposed on this edge.';
-      } else {
-        elements.portfolioStatus.textContent = 'Portfolio balances, position inventory, and risk limits are not yet exposed on this edge.';
-      }
-
-      if (marketReady && featureReady) {
-        elements.tradingStatus.textContent = 'Market and feature services are reachable, but order routing remains disabled until rotated credentials and bounded execution controls are published.';
-      } else {
-        elements.tradingStatus.textContent = 'Order routing remains disabled until core readiness stabilizes, rotated credentials are supplied, and bounded execution controls are published.';
-      }
-
-      if (strategyReady) {
-        elements.signalBadge.textContent = 'strategy ready';
-        elements.signalBadge.className = 'badge is-ready';
-        elements.signalPosture.textContent = 'proposal feed not connected';
-        elements.signalStatus.textContent = 'The strategy engine is reporting ready, but its proposals are not yet exposed through a review queue on this edge.';
-      } else {
-        elements.signalBadge.textContent = 'awaiting strategy';
-        elements.signalBadge.className = 'badge is-degraded';
-        elements.signalPosture.textContent = 'waiting for strategy readiness';
-        elements.signalStatus.textContent = 'Proposal review remains unavailable until strategy output is published into a reviewable feed.';
-      }
-
-      elements.executionStatus.textContent = 'No execution endpoint is currently published from the edge, so live orders, fills, reject messages, and broker acknowledgements remain unavailable.';
-      elements.monitoringStatus.textContent = `Public edge checks update every ${pollIntervalMs / 1000} seconds. Additional telemetry can be surfaced here once log, queue, and deployment signals are published.`;
+    
+    async function refreshDashboard() {
+      const [overview, strategies, orders, positions, reconciliation, services, alerts, controlState, proposalQueue, proposalReviews] = await Promise.all([
+        fetchJSON('/api/query-api/accounts/main/overview'),
+        fetchJSON('/api/query-api/strategies'),
+        fetchJSON('/api/query-api/orders?account_id=main'),
+        fetchJSON('/api/query-api/positions?account_id=main'),
+        fetchJSON('/api/query-api/reconciliation/status?account_id=main'),
+        fetchJSON('/api/query-api/services/health'),
+        fetchJSON('/api/notification-service/alerts'),
+        fetchJSON('/api/control-service/state'),
+        fetchJSON('/api/proposal-service/queue'),
+        fetchJSON('/api/proposal-service/reviews'),
+      ]);
+      renderOverview(overview);
+      renderStrategies(strategies);
+      renderOrders(orders);
+      renderPositions(positions);
+      renderReconciliation(reconciliation);
+      renderServices(services);
+      renderIncidents(alerts);
+      renderControlState(controlState);
+      renderProposalQueue(proposalQueue, proposalReviews);
     }
-
-    function isServiceReady(results, serviceId) {
-      return results.some((result) => result.id === serviceId && result.ready);
-    }
-
-    function formatChecks(checks) {
-      if (!checks || typeof checks !== 'object') {
-        return 'No detailed checks were published.';
+    
+    function connectRealtime() {
+      if (realtimeSocket) {
+        realtimeSocket.close();
       }
-
-      const summary = Object.entries(checks)
-        .map(([key, value]) => `${key}: ${value}`)
-        .join(' / ');
-
-      return summary || 'No detailed checks were published.';
-    }
-
-    function setPollTimestamp() {
-      elements.timestamp.textContent = formatTimestamp();
-    }
-
-    function formatTimestamp() {
-      return new Date().toLocaleString('en-US', {
-        dateStyle: 'medium',
-        timeStyle: 'short',
+      if (!authToken) {
+        setRealtimeState('Realtime locked', 'Sign in to unlock live patches from the realtime gateway.');
+        return;
+      }
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      realtimeSocket = new WebSocket(`${protocol}//${window.location.host}/api/realtime-gateway/ws?token=${encodeURIComponent(authToken)}&account_id=main`);
+      realtimeSocket.addEventListener('open', () => setRealtimeState('Realtime connected', 'Live patches are flowing from the realtime gateway.'));
+      realtimeSocket.addEventListener('message', (event) => {
+        const payload = JSON.parse(event.data);
+        applyRealtimePayload(payload.channels || {});
       });
+      realtimeSocket.addEventListener('close', () => {
+        if (!authToken) {
+          setRealtimeState('Realtime locked', 'Sign in to unlock live patches from the realtime gateway.');
+          return;
+        }
+        setRealtimeState('Realtime disconnected', 'Dashboard is showing the last known good snapshot with stale markings.');
+      });
+      realtimeSocket.addEventListener('error', () => setRealtimeState('Realtime error', 'Realtime gateway is unavailable, so only query snapshots are shown.'));
+    }
+    
+    function applyRealtimePayload(channels) {
+      if (channels['account.health']) {
+        renderOverview(channels['account.health']);
+      }
+      if (channels['strategy.runtime']) {
+        renderStrategies(channels['strategy.runtime']);
+      }
+      if (channels['orders.lifecycle']) {
+        renderOrders(channels['orders.lifecycle']);
+      }
+      if (channels['positions.risk']) {
+        renderPositions(channels['positions.risk']);
+      }
+      if (channels.reconciliation) {
+        renderReconciliation(channels.reconciliation);
+      }
+      if (channels['service.health']) {
+        renderServices(channels['service.health']);
+      }
+      if (channels.incidents) {
+        renderIncidents(channels.incidents);
+      }
+      if (channels['control.state']) {
+        renderControlState(channels['control.state']);
+      }
+      if (channels['proposal.queue'] || channels['proposal.reviews']) {
+        renderProposalQueue(channels['proposal.queue'] || latestProposalQueue, channels['proposal.reviews'] || latestProposalReviews);
+      }
+    }
+    
+    function renderOverview(response) {
+      const data = response?.data || {};
+      const meta = response?.meta || {};
+      const balances = Array.isArray(data.balances) ? data.balances : [];
+      const positions = Array.isArray(data.positions) ? data.positions : [];
+      elements.accountHealthBadge.textContent = data.state_health || 'unknown';
+      elements.accountHealthBadge.className = `badge ${badgeClass(data.state_health)}`;
+      elements.accountHealthList.innerHTML = [
+        listRow('Account', data.account_id || 'main'),
+        listRow('Completeness', meta.completeness || 'partial'),
+        listRow('Snapshot version', String(meta.snapshot_version || '--')),
+        listRow('Balance', balances[0] ? `${balances[0].asset} ${balances[0].available_balance}` : 'n/a'),
+        listRow('Positions', `${positions.length} live slots`),
+      ].join('');
+      elements.freshnessChip.textContent = meta.freshness_ms !== undefined ? `${meta.freshness_ms} ms` : '--';
+      elements.killSwitchChip.textContent = data.state_health || 'DEGRADED';
+      elements.killSwitchChip.className = `badge ${badgeClass(data.state_health)}`;
+    }
+    
+    function renderStrategies(response) {
+      const items = Array.isArray(response?.data) ? response.data : [];
+      elements.strategyRuntimeBadge.textContent = `${items.length} strategies`;
+      elements.strategyRuntimeBadge.className = 'badge section-badge';
+      elements.strategyRuntimeList.innerHTML = items.length
+        ? items.slice(0, 4).map((item) => listRow(item.strategy_id, `${item.decision} / ${formatNumber(item.promotion_score)}`)).join('')
+        : '<p class="proposal-empty">No promotion decisions recorded yet.</p>';
+      elements.signalsTabCopy.textContent = items.length ? `${items[0].strategy_id} is ${items[0].decision.toLowerCase()} with score ${formatNumber(items[0].promotion_score)}.` : 'No strategy runtime view has been projected yet.';
+      elements.strategyTabCopy.textContent = items.length ? `${items.length} strategy decisions are available from the promotion gate.` : 'Promotion gate history will appear here once evaluations run.';
+    }
+    
+    function renderOrders(response) {
+      const items = Array.isArray(response?.data) ? response.data : [];
+      latestOrders = items;
+      elements.ordersBadge.textContent = `${items.length} rows`;
+      elements.ordersBadge.className = 'badge section-badge';
+      elements.ordersTableBody.innerHTML = items.length
+        ? items.slice(0, 8).map((item, index) => `<tr data-order-index="${index}"><td>${item.internal_order_id}</td><td>${item.source?.signal_id || 'n/a'}</td><td>${item.terminal_state || 'open'}</td><td>${item.pending_state || 'none'}</td></tr>`).join('')
+        : '<tr><td colspan="4">No order lineage rows available.</td></tr>';
+      elements.ordersTableBody.querySelectorAll('[data-order-index]').forEach((row) => {
+        row.addEventListener('click', () => selectOrder(Number(row.dataset.orderIndex || '0')));
+      });
+      if (items[0]) {
+        selectOrder(0);
+      }
+    }
+    
+    function selectOrder(index) {
+      const item = latestOrders[index];
+      if (!item) {
+        return;
+      }
+      elements.orderDetailBadge.textContent = item.pending_state || item.terminal_state || 'idle';
+      elements.orderDetailBadge.className = `badge ${badgeClass(item.pending_state || item.terminal_state)}`;
+      elements.orderDetailTimeline.textContent = [item.pending_state, item.terminal_state].filter(Boolean).join(' -> ') || 'No timeline available';
+      elements.orderDetailExecution.textContent = item.exchange_order_id || 'Execution ack pending';
+      elements.orderDetailPortfolio.textContent = item.fills?.length ? `${item.fills.length} fills linked` : 'Portfolio truth not linked yet';
+      elements.orderDetailRecon.textContent = item.pending_state === 'ReconciliationRequired' ? 'Reconciliation required' : 'No explicit reconciliation hold';
+    }
+    
+    function renderPositions(response) {
+      const items = Array.isArray(response?.data) ? response.data : [];
+      elements.positionsBadge.textContent = `${items.length} positions`;
+      elements.positionsBadge.className = 'badge section-badge';
+      elements.positionsTableBody.innerHTML = items.length
+        ? items.slice(0, 8).map((item) => `<tr><td>${item.symbol}</td><td>${item.qty}</td><td>${item.unrealized_pnl || '0'}</td><td>${item.position_side}</td></tr>`).join('')
+        : '<tr><td colspan="4">No positions available.</td></tr>';
+      elements.contextActionsList.innerHTML = items.length
+        ? items.slice(0, 3).map((item) => listRow(item.symbol, `${item.position_side} / entry ${item.entry_price || 'n/a'} / mark ${item.mark_price || 'n/a'}`)).join('')
+        : '<p class="proposal-empty">No live positions to act on.</p>';
+      elements.riskBadgeBar.innerHTML = [
+        riskPill('Gross exposure', items.length ? 'active' : 'flat'),
+        riskPill('Stale market data', 'guarded'),
+        riskPill('Safe mode', items.length ? 'watch' : 'clear'),
+      ].join('');
+      elements.riskBadge.textContent = items.length ? 'watch' : 'clear';
+      elements.riskBadge.className = `badge ${items.length ? 'is-degraded' : 'is-ready'}`;
+      elements.contextBadge.textContent = items.length ? 'observed live' : 'idle';
+    }
+    
+    function renderReconciliation(response) {
+      const data = response?.data || {};
+      elements.reconTabCopy.textContent = `Canonical state is ${data.state_health || 'unknown'} with ${data.completeness || 'unknown'} completeness.`;
+    }
+    
+    function renderServices(response) {
+      const data = response?.data || {};
+      const entries = Object.entries(data);
+      elements.contextActionsList.innerHTML = entries.length
+        ? entries.slice(0, 3).map(([name, value]) => listRow(`service ${name}`, String(value))).join('')
+        : elements.contextActionsList.innerHTML;
+    }
+    
+    function renderIncidents(response) {
+      const items = Array.isArray(response?.items) ? response.items : (Array.isArray(response?.data) ? response.data : []);
+      elements.incidentBadge.textContent = `${items.length} open`;
+      elements.incidentBadge.className = `badge ${items.length > 0 ? 'is-degraded' : 'section-badge'}`;
+      elements.incidentList.innerHTML = items.length
+        ? items.slice(0, 6).map((item) => incidentRow(item)).join('')
+        : '<p class="proposal-empty">No active incidents or alerts.</p>';
+    }
+    
+    function incidentRow(item) {
+      const title = item.title || item.code || 'Incident';
+      const severity = (item.severity || 'information').toUpperCase();
+      const source = item.source || 'system';
+      const message = item.message || 'No detail provided.';
+      return `<div class="review-history-item"><span>${title}</span><strong>${severity}</strong><small>${source} - ${message}</small></div>`;
+    }
+    
+    function renderProposalQueue(queueResponse, reviewsResponse) {
+      latestProposalQueue = queueResponse;
+      latestProposalReviews = reviewsResponse;
+      const items = Array.isArray(queueResponse?.items) ? queueResponse.items : [];
+      const pendingItems = items.filter((item) => item.status === 'PENDING');
+      const reviews = Array.isArray(reviewsResponse?.items) ? reviewsResponse.items : [];
+      if (!selectedProposalId || !items.some((item) => item.proposal_id === selectedProposalId)) {
+        selectedProposalId = pendingItems[0]?.proposal_id || items[0]?.proposal_id || null;
+      }
+      const selectedProposal = items.find((item) => item.proposal_id === selectedProposalId) || null;
+      const latestReview = selectedProposal ? reviews.find((item) => item.proposal_id === selectedProposal.proposal_id && item.status !== 'CREATED') : null;
+      const recentDecisions = reviews.filter((item) => item.status !== 'CREATED');
+      elements.approvalBadge.textContent = `${pendingItems.length} pending`;
+      elements.approvalBadge.className = `badge ${pendingItems.length > 0 ? 'is-degraded' : 'is-ready'}`;
+      elements.proposalHistoryBadge.textContent = `${recentDecisions.length} items`;
+      elements.proposalHistoryBadge.className = 'badge section-badge';
+      elements.proposalQueueList.innerHTML = items.length
+        ? items.slice(0, 6).map((item) => `
+          <button class="proposal-queue-item${item.proposal_id === selectedProposalId ? ' is-selected' : ''}" type="button" data-proposal-id="${item.proposal_id}">
+            <span>${item.instrument?.symbol || item.proposal_id}</span>
+            <strong>${item.status}</strong>
+          </button>
+        `).join('')
+        : '<p class="proposal-empty">No proposals available for review.</p>';
+      elements.proposalQueueList.querySelectorAll('[data-proposal-id]').forEach((button) => {
+        button.addEventListener('click', () => {
+          selectedProposalId = button.dataset.proposalId;
+          renderProposalQueue(latestProposalQueue, latestProposalReviews);
+        });
+      });
+      elements.proposalHistoryList.innerHTML = recentDecisions.length
+        ? recentDecisions.slice(0, 6).map((item) => reviewHistoryRow(item)).join('')
+        : '<p class="proposal-empty">No review decisions recorded yet.</p>';
+      const reviewDisabled = !selectedProposal || selectedProposal.status !== 'PENDING' || !authToken || !hasPermission('proposal.review');
+      elements.proposalApproveButton.disabled = reviewDisabled;
+      elements.proposalHoldButton.disabled = reviewDisabled;
+      elements.proposalRejectButton.disabled = reviewDisabled;
+      const reviewTitle = !authToken
+        ? 'Sign in to review proposals.'
+        : (!hasPermission('proposal.review') ? 'Missing permission: proposal.review' : 'Ready');
+      elements.proposalApproveButton.title = reviewTitle;
+      elements.proposalHoldButton.title = reviewTitle;
+      elements.proposalRejectButton.title = reviewTitle;
+      if (!selectedProposal) {
+        elements.proposalReviewState.textContent = 'No proposal selected.';
+        return;
+      }
+      const summaryParts = [
+        `${selectedProposal.instrument?.symbol || selectedProposal.proposal_id}`,
+        `strategy ${selectedProposal.strategy_id || 'unknown'}`,
+        `status ${selectedProposal.status}`,
+      ];
+      if (latestReview) {
+        summaryParts.push(`latest review ${latestReview.status.toLowerCase()} by ${latestReview.reviewer || 'system'}`);
+      }
+      elements.proposalReviewState.textContent = summaryParts.join(' - ');
+    }
+    
+    function reviewHistoryRow(item) {
+      const reason = item.reason ? ` - ${item.reason}` : '';
+      return `<div class="review-history-item${item.proposal_id === selectedProposalId ? ' is-selected' : ''}"><span>${item.proposal_id}</span><strong>${item.status}</strong><small>${item.reviewer || 'system'} at ${formatTimestamp(item.occurred_at)}${reason}</small></div>`;
+    }
+    
+    function renderControlState(controlState) {
+      const killSwitch = controlState?.kill_switch || 'NORMAL';
+      elements.killSwitchChip.textContent = killSwitch;
+      elements.killSwitchChip.className = `badge ${badgeClass(killSwitch)}`;
+      const latestAction = Array.isArray(controlState?.recent_actions) ? controlState.recent_actions[0] : null;
+      elements.commandObserved.textContent = latestAction
+        ? `Observed control state: ${latestAction.type} by ${latestAction.actor || 'system'} at ${formatTimestamp(latestAction.occurred_at)} (${latestAction.observed || 'observation pending'}).`
+        : `Observed control state: kill switch ${killSwitch.toLowerCase()}.`;
+    }
+    
+    function setRealtimeState(title, copy) {
+      elements.pollState.textContent = title;
+      elements.staleBannerTitle.textContent = title;
+      elements.staleBannerCopy.textContent = copy;
+      elements.staleBanner.classList.toggle('is-warning', title !== 'Realtime connected');
+    }
+    
+    async function fetchJSON(url) {
+      const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {};
+      const response = await fetch(url, { cache: 'no-store', headers }).catch(() => null);
+      if (!response) {
+        return null;
+      }
+      if (response.status === 401) {
+        clearAuthSession(false);
+        updateAuthSessionUI();
+        connectRealtime();
+        return null;
+      }
+      return response.json().catch(() => null);
+    }
+    
+    async function submitAuthLogin() {
+      const username = elements.authUsernameInput.value.trim();
+      const password = elements.authPasswordInput.value;
+      if (!username || !password) {
+        elements.authSessionDetail.textContent = 'Enter the bootstrap operator username and password.';
+        return;
+      }
+      const response = await fetch('/api/auth-service/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }) }).catch(() => null);
+      const payload = await response?.json().catch(() => null);
+      if (!response || !response.ok) {
+        clearAuthSession(false);
+        elements.authSessionDetail.textContent = payload?.error || 'Sign in failed.';
+        return;
+      }
+      authToken = payload.access_token || '';
+      authStepUp = payload?.step_up === true;
+      authPermissions = Array.isArray(payload?.permissions) ? payload.permissions : [];
+      localStorage.setItem(authStorageKey, authToken);
+      updateAuthSessionUI(payload);
+      await refreshDashboard();
+      connectRealtime();
+    }
+    
+    async function submitAuthStepUp() {
+      if (!authToken) {
+        elements.authSessionDetail.textContent = 'Sign in before requesting step-up authentication.';
+        return;
+      }
+      const password = elements.authPasswordInput.value;
+      if (!password) {
+        elements.authSessionDetail.textContent = 'Re-enter your password to complete step-up authentication.';
+        return;
+      }
+      const response = await fetch('/api/auth-service/auth/step-up', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+        body: JSON.stringify({ password }),
+      }).catch(() => null);
+      const payload = await response?.json().catch(() => null);
+      if (!response || !response.ok) {
+        elements.authSessionDetail.textContent = payload?.error || 'Step-up failed.';
+        return;
+      }
+      authToken = payload.access_token || authToken;
+      authStepUp = payload?.step_up === true;
+      authPermissions = Array.isArray(payload?.permissions) ? payload.permissions : authPermissions;
+      localStorage.setItem(authStorageKey, authToken);
+      elements.authPasswordInput.value = '';
+      updateAuthSessionUI(payload);
+      connectRealtime();
+    }
+    
+    async function submitProposalReview(action) {
+      if (!authToken) {
+        elements.proposalReviewState.textContent = 'Sign in before reviewing proposals.';
+        return;
+      }
+      if (!selectedProposalId) {
+        elements.proposalReviewState.textContent = 'Select a proposal first.';
+        return;
+      }
+      const reason = elements.proposalReasonInput.value.trim();
+      if (action === 'reject' && !reason) {
+        elements.proposalReviewState.textContent = 'Reject requires a reason.';
+        return;
+      }
+      const response = await fetch(`/api/proposal-service/queue/${encodeURIComponent(selectedProposalId)}/${action}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+        body: JSON.stringify({ reason }),
+      }).catch(() => null);
+      const payload = await response?.json().catch(() => null);
+      if (!response || !response.ok) {
+        if (response?.status === 401) {
+          clearAuthSession(false);
+          updateAuthSessionUI();
+        }
+        elements.proposalReviewState.textContent = payload?.error || 'Proposal review failed.';
+        return;
+      }
+      elements.proposalReasonInput.value = '';
+      elements.proposalReviewState.textContent = `Proposal ${payload?.proposal_id || selectedProposalId} marked ${payload?.status || action.toUpperCase()}.`;
+      await refreshDashboard();
+    }
+    
+    function clearAuthSession(rerender = true) {
+      authToken = '';
+      authStepUp = false;
+      authPermissions = [];
+      localStorage.removeItem(authStorageKey);
+      if (realtimeSocket) {
+        realtimeSocket.close();
+        realtimeSocket = null;
+      }
+      setRealtimeState('Realtime locked', 'Sign in to unlock live patches from the realtime gateway.');
+      if (rerender) {
+        updateAuthSessionUI();
+      }
+    }
+    
+    function updateAuthSessionUI(payload = null) {
+      if (!authToken) {
+        elements.authSessionState.textContent = 'locked';
+        elements.authSessionDetail.textContent = 'Sign in to unlock protected queries.';
+        elements.authPermissionsList.innerHTML = '<p class="proposal-empty">No permissions loaded.</p>';
+        elements.authStepUpButton.disabled = true;
+        elements.authLogoutButton.disabled = true;
+        updateActionAvailability();
+        return;
+      }
+      authStepUp = payload?.step_up === true || authStepUp;
+      authPermissions = Array.isArray(payload?.permissions) ? payload.permissions : authPermissions;
+      elements.authSessionState.textContent = authStepUp ? 'step-up active' : (payload?.role || 'operator session');
+      elements.authSessionDetail.textContent = payload?.subject
+        ? `${payload.subject} authenticated.${authStepUp ? ' Step-up enabled for emergency controls.' : ''}`
+        : `Stored operator session restored.${authStepUp ? ' Step-up enabled for emergency controls.' : ''}`;
+      elements.authPermissionsList.innerHTML = authPermissions.length
+        ? authPermissions.slice(0, 6).map((permission) => listRow('permission', permission)).join('')
+        : '<p class="proposal-empty">No permissions loaded.</p>';
+      elements.authStepUpButton.disabled = false;
+      elements.authLogoutButton.disabled = false;
+      updateActionAvailability();
+    }
+    
+    function updateActionAvailability() {
+      document.querySelectorAll('[data-command]').forEach((button) => {
+        const command = button.dataset.command;
+        const permission = requiredPermissionForCommand[command];
+        if (!permission) {
+          return;
+        }
+        if (!authToken) {
+          button.disabled = true;
+          button.title = 'Sign in to view or run governed actions.';
+          return;
+        }
+        if (!hasPermission(permission)) {
+          button.disabled = true;
+          button.title = `Missing permission: ${permission}`;
+          return;
+        }
+        button.disabled = false;
+        button.title = 'Step-up authentication required before submit.';
+      });
+    }
+    
+    function hasPermission(permission) {
+      return authPermissions.includes(permission);
+    }
+    
+    function openCommandDialog(command) {
+      commandIntent = command;
+      const supported = supportedControlCommands[command];
+      elements.commandDialogTitle.textContent = `Confirm ${command}`;
+      elements.commandDialogBody.textContent = supported
+        ? `Desired state: ${command}. This action is wired to the current control-service intake path and requires step-up authentication. Downstream execution effects can remain delayed or observational.`
+        : `Desired state: ${command}. This command is still planned only, so the console will record intent locally without calling a backend endpoint.`;
+      elements.commandReasonInput.value = '';
+      elements.commandDialog.showModal();
+    }
+    
+    async function handleCommandDialogClose() {
+      if (elements.commandDialog.returnValue !== 'confirm' || !commandIntent) {
+        return;
+      }
+      const reason = elements.commandReasonInput.value.trim() || 'no reason supplied';
+      const supported = supportedControlCommands[commandIntent];
+      if (supported) {
+        if (!authToken) {
+          elements.commandObserved.textContent = 'Sign in before running emergency controls.';
+          commandIntent = null;
+          return;
+        }
+        if (!authStepUp) {
+          elements.commandObserved.textContent = 'Step-up authentication is required before running emergency controls.';
+          commandIntent = null;
+          return;
+        }
+        const response = await fetch(supported.endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+          body: JSON.stringify({ reason }),
+        }).catch(() => null);
+        const payload = await response?.json().catch(() => null);
+        if (!response || !response.ok) {
+          elements.commandObserved.textContent = payload?.error || 'Emergency control request failed.';
+          commandIntent = null;
+          return;
+        }
+        renderControlState(payload?.state);
+        elements.commandObserved.textContent = `Observed control state: ${payload?.action?.type || supported.label} accepted into control-service with reason: ${reason}. Downstream execution effect is still observed separately.`;
+        commandIntent = null;
+        return;
+      }
+      elements.commandObserved.textContent = `Desired command ${commandIntent} recorded with reason: ${reason}. This action is not wired to a live backend path yet.`;
+      commandIntent = null;
+    }
+    
+    function listRow(label, value) {
+      return `<div class="list-row"><span>${label}</span><strong>${value}</strong></div>`;
+    }
+    
+    function riskPill(label, value) {
+      return `<div class="risk-pill"><span>${label}</span><strong>${value}</strong></div>`;
+    }
+    
+    function badgeClass(state) {
+      const normalized = String(state || '').toUpperCase();
+      if (normalized === 'SYNCED' || normalized === 'CLEAR' || normalized === 'NORMAL') {
+        return 'is-ready';
+      }
+      if (normalized.includes('DEGRADED') || normalized.includes('PENDING') || normalized.includes('WATCH')) {
+        return 'is-degraded';
+      }
+      if (normalized.includes('HALTED') || normalized.includes('FLATTEN') || normalized.includes('REJECT')) {
+        return 'is-blocked';
+      }
+      return 'section-badge';
+    }
+    
+    function formatNumber(value) {
+      return typeof value === 'number' ? value.toFixed(2) : 'n/a';
+    }
+    
+    function formatTimestamp(value) {
+      if (!value) {
+        return 'unknown time';
+      }
+      const parsed = new Date(value);
+      if (Number.isNaN(parsed.getTime())) {
+        return 'unknown time';
+      }
+      return parsed.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
     }

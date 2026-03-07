@@ -4,12 +4,48 @@ resources:
   - namespace.yaml
   - feature-pipeline-service.yaml
   - feature-pipeline-deployment.yaml
+  - gateway-service.yaml
+  - gateway-deployment.yaml
   - market-data-service.yaml
   - market-data-deployment.yaml
+  - execution-router-service.yaml
+  - execution-router-deployment.yaml
+  - order-manager-service.yaml
+  - order-manager-deployment.yaml
+  - portfolio-engine-service.yaml
+  - portfolio-engine-deployment.yaml
+  - portfolio-canonical-state-service.yaml
+  - portfolio-canonical-state-deployment.yaml
+  - positions-ledger-service.yaml
+  - positions-ledger-deployment.yaml
+  - promotion-gate-service.yaml
+  - promotion-gate-deployment.yaml
+  - research-labs-service.yaml
+  - research-labs-deployment.yaml
+  - projection-worker-service.yaml
+  - projection-worker-deployment.yaml
+  - proposal-service-service.yaml
+  - proposal-service-deployment.yaml
+  - query-api-service.yaml
+  - query-api-deployment.yaml
+  - reconciliation-service.yaml
+  - reconciliation-deployment.yaml
+  - realtime-gateway-service.yaml
+  - realtime-gateway-deployment.yaml
+  - risk-engine-service.yaml
+  - risk-engine-deployment.yaml
   - strategy-engine-service.yaml
   - strategy-engine-deployment.yaml
-  - trader-web-configmap.yaml
   - trader-web-nginx-configmap.yaml
   - trader-web-service.yaml
   - trader-web-deployment.yaml
   - trade-ingress.yaml
+generatorOptions:
+  disableNameSuffixHash: true
+configMapGenerator:
+  - name: trader-web-assets
+    namespace: clab-core
+    files:
+      - trader-web/index.html
+      - trader-web/app.js
+      - trader-web/styles.css

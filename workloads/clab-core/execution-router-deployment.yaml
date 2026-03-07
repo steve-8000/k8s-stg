@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: execution-router
+  namespace: clab-core
+  labels:
+    app.kubernetes.io/name: execution-router
+    app.kubernetes.io/instance: execution-router-stg
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: execution-router
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: execution-router
+        app.kubernetes.io/instance: execution-router-stg
+    spec:
+      containers:
+        - name: execution-router
+          image: clab-trade/execution-router:v0.1.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: CLAB_ENV
+              value: staging
+            - name: CLAB_VENUE
+              value: binance
+            - name: EXECUTION_ROUTER_HTTP_ADDR
+              value: :8085
+            - name: EXECUTION_ROUTER_NATS_URL
+              value: nats://nats.clab-system.svc.cluster.local:4222
+            - name: EXECUTION_ROUTER_SOURCE_STREAM
+              value: EXECUTION_COMMAND_DATA
+            - name: EXECUTION_ROUTER_CONSUMER
+              value: execution-router
+          ports:
+            - name: http
+              containerPort: 8085
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false

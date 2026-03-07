@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: realtime-gateway
+  namespace: clab-core
+  labels:
+    app.kubernetes.io/name: realtime-gateway
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: realtime-gateway
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: realtime-gateway
+        app.kubernetes.io/instance: realtime-gateway-stg
+    spec:
+      containers:
+        - name: realtime-gateway
+          image: clab-trade/realtime-gateway:v0.1.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: CLAB_ENV
+              value: staging
+            - name: CLAB_VENUE
+              value: binance
+            - name: REALTIME_GATEWAY_HTTP_ADDR
+              value: :8096
+            - name: REALTIME_GATEWAY_QUERY_API_URL
+              value: http://query-api.clab-core.svc.cluster.local
+            - name: REALTIME_GATEWAY_OPS_CONSOLE_API_URL
+              value: http://ops-console-api.clab-apps.svc.cluster.local
+            - name: REALTIME_GATEWAY_CONTROL_SERVICE_URL
+              value: http://control-service.clab-apps.svc.cluster.local
+            - name: REALTIME_GATEWAY_PROPOSAL_SERVICE_URL
+              value: http://proposal-service.clab-core.svc.cluster.local
+            - name: REALTIME_GATEWAY_NOTIFICATION_SERVICE_URL
+              value: http://notification-service.clab-apps.svc.cluster.local
+            - name: REALTIME_GATEWAY_AUTH_SERVICE_URL
+              value: http://auth-service.clab-apps.svc.cluster.local
+            - name: REALTIME_GATEWAY_NATS_URL
+              value: nats://nats.clab-system.svc.cluster.local:4222
+          ports:
+            - name: http
+              containerPort: 8096
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
