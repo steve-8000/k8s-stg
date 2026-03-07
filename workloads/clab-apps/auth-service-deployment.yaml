@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
         - name: auth-service
-          image: clab-trade/auth-service:v0.1.0
+          image: clab-trade/auth-service:v0.1.1
           imagePullPolicy: IfNotPresent
           env:
             - name: CLAB_ENV
