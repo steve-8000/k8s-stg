@@ -6,3 +6,5 @@ resources:
   - feature-pipeline-deployment.yaml
   - market-data-service.yaml
   - market-data-deployment.yaml
+  - strategy-engine-service.yaml
+  - strategy-engine-deployment.yaml
