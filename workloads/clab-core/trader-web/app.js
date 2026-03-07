@@ -2,6 +2,8 @@ const authStorageKey = 'clab-auth-token';
 let authToken = localStorage.getItem(authStorageKey) || '';
 let authStepUp = false;
 let authPermissions = [];
+let authSessionProfile = null;
+let authSessionNotice = '';
 let realtimeSocket = null;
 let commandIntent = null;
 let latestOrders = [];
@@ -13,37 +15,37 @@ const supportedControlCommands = {
   'cancel-all': {
     endpoint: '/api/control-service/execution/cancel-all',
     label: 'cancel_all',
-    scope: 'account/main 및 활성 주문 범위',
-    effect: '적격한 대기 주문의 취소를 요청합니다. 최종 주문 상태는 downstream lifecycle event로 확인해야 합니다.',
-    residualRisk: '체결 잔여분, venue 지연, stale projection 때문에 승인 후에도 일시적인 노출이 남을 수 있습니다.',
-    approval: 'step-up 필수, 감사 기록 필수, 취소 완료는 observed state로 확인',
+    scope: 'account/main and active orders',
+    effect: 'Requests cancellation for eligible open orders. Confirm final state from downstream lifecycle events.',
+    residualRisk: 'Residual fills, venue lag, or stale projections can leave temporary exposure after approval.',
+    approval: 'Step-up required. Audit trail required. Confirm completion from observed state.',
     actionClass: 'danger',
   },
   flatten: {
     endpoint: '/api/control-service/execution/flatten',
     label: 'flatten',
-    scope: 'account/main 및 현재 노출 범위',
-    effect: 'governed execution path를 통해 통제된 flatten을 요청합니다. 노출이 수렴하기 전까지 desired flat은 truth가 아닙니다.',
-    residualRisk: '잔여 포지션, 부분 체결, reconciliation 지연으로 인해 승인 후에도 노출이 남을 수 있습니다.',
-    approval: 'step-up 필수, 감사 기록 필수, 정책에 따라 승인 경로 적용 가능',
+    scope: 'account/main and current exposure',
+    effect: 'Requests a governed flatten through the controlled execution path. Desired flat is not truth until exposure converges.',
+    residualRisk: 'Residual positions, partial fills, or reconciliation lag can leave exposure after approval.',
+    approval: 'Step-up required. Audit trail required. Approval policy may apply.',
     actionClass: 'danger',
   },
   'kill-switch': {
     endpoint: '/api/control-service/risk/kill-switch/arm',
     label: 'kill_switch_arm',
-    scope: 'account/main 제어 범위',
-    effect: '신규 실행 흐름에 hard risk control을 요청하고 safety state machine을 상향 전환합니다.',
-    residualRisk: '기존 노출, venue 지연, 수동 개입에 따라 추가 flatten 또는 reconciliation이 필요할 수 있습니다.',
-    approval: 'step-up 필수, 감사 기록 필수, downstream에서 dual control 적용 가능',
+    scope: 'account/main control scope',
+    effect: 'Requests a hard risk control on new execution flow and escalates the safety state machine.',
+    residualRisk: 'Existing exposure, venue lag, or manual intervention may still require flatten or reconciliation.',
+    approval: 'Step-up required. Audit trail required. Dual control may apply downstream.',
     actionClass: 'danger',
   },
   'kill-switch-release': {
     endpoint: '/api/control-service/risk/kill-switch/release',
     label: 'kill_switch_release',
-    scope: 'account/main 제어 범위',
-    effect: '인시던트 검토 또는 reconciliation 이후 활성 kill switch 상태의 해제를 요청합니다.',
-    residualRisk: '근본 원인이 해소되지 않은 상태에서 조기 해제하면 unsafe trading이 다시 열릴 수 있습니다.',
-    approval: 'step-up 필수, 감사 기록 필수, 승인 경로에서 incident 해소를 확인해야 합니다',
+    scope: 'account/main control scope',
+    effect: 'Requests release of an active kill switch after incident review or reconciliation.',
+    residualRisk: 'Releasing early can reopen unsafe trading if the root cause is unresolved.',
+    approval: 'Step-up required. Audit trail required. Approval must confirm incident resolution.',
     actionClass: 'caution',
   },
 };
@@ -139,12 +141,18 @@ async function handleOAuthRedirect() {
   const params = new URLSearchParams(window.location.search);
   const code = params.get('code');
   const state = params.get('state');
-  if (!code) {
+  const error = params.get('error');
+  const errorDescription = params.get('error_description');
+  const isStepUp = localStorage.getItem('clab-step-up-pending') === 'true';
+  if (!code && !error) {
     return;
   }
   window.history.replaceState({}, document.title, window.location.pathname);
-  const isStepUp = localStorage.getItem('clab-step-up-pending') === 'true';
   localStorage.removeItem('clab-step-up-pending');
+  if (error) {
+    authSessionNotice = formatOAuthRedirectError(error, errorDescription, isStepUp);
+    return;
+  }
   if (isStepUp && authToken) {
     const response = await fetch('/api/auth-service/auth/google/step-up', {
       method: 'POST',
@@ -153,12 +161,14 @@ async function handleOAuthRedirect() {
     }).catch(() => null);
     const payload = await response?.json().catch(() => null);
     if (!response || !response.ok) {
-      elements.authSessionDetail.textContent = payload?.error || 'Google step-up 인증에 실패했습니다.';
+      elements.authSessionDetail.textContent = payload?.error || 'Google step-up failed.';
       return;
     }
     authToken = payload.access_token || authToken;
     authStepUp = payload?.step_up === true;
     authPermissions = Array.isArray(payload?.permissions) ? payload.permissions : authPermissions;
+    authSessionProfile = payload;
+    authSessionNotice = '';
     localStorage.setItem(authStorageKey, authToken);
     updateAuthSessionUI(payload);
     connectRealtime();
@@ -171,12 +181,14 @@ async function handleOAuthRedirect() {
   }).catch(() => null);
   const payload = await response?.json().catch(() => null);
   if (!response || !response.ok) {
-    elements.authSessionDetail.textContent = payload?.error || 'Google 로그인에 실패했습니다.';
+    elements.authSessionDetail.textContent = payload?.error || 'Google sign-in failed.';
     return;
   }
   authToken = payload.access_token || '';
   authStepUp = payload?.step_up === true;
   authPermissions = Array.isArray(payload?.permissions) ? payload.permissions : [];
+  authSessionProfile = payload;
+  authSessionNotice = '';
   localStorage.setItem(authStorageKey, authToken);
   updateAuthSessionUI(payload);
   connectRealtime();
@@ -194,6 +206,7 @@ async function hydrateAuthSession() {
   const payload = await response.json().catch(() => null);
   authStepUp = payload?.step_up === true;
   authPermissions = Array.isArray(payload?.permissions) ? payload.permissions : [];
+  authSessionProfile = payload;
 }
 
 async function refreshDashboard() {
@@ -225,24 +238,24 @@ function connectRealtime() {
     realtimeSocket.close();
   }
   if (!authToken) {
-    setRealtimeState('Realtime 잠금', 'realtime gateway의 live patch를 보려면 로그인해야 합니다.');
+    setRealtimeState('Realtime locked', 'Sign in to view live patches.');
     return;
   }
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   realtimeSocket = new WebSocket(`${protocol}//${window.location.host}/api/realtime-gateway/ws?token=${encodeURIComponent(authToken)}&account_id=main`);
-  realtimeSocket.addEventListener('open', () => setRealtimeState('Realtime 연결됨', 'realtime gateway에서 live patch가 유입되고 있습니다.'));
+  realtimeSocket.addEventListener('open', () => setRealtimeState('Realtime connected', 'Live patches are streaming in.'));
   realtimeSocket.addEventListener('message', (event) => {
     const payload = JSON.parse(event.data);
     applyRealtimePayload(payload.channels || {});
   });
   realtimeSocket.addEventListener('close', () => {
     if (!authToken) {
-      setRealtimeState('Realtime 잠금', 'realtime gateway의 live patch를 보려면 로그인해야 합니다.');
+      setRealtimeState('Realtime locked', 'Sign in to view live patches.');
       return;
     }
-    setRealtimeState('Realtime 연결 끊김', '대시보드는 마지막 정상 snapshot을 stale 표기와 함께 보여주고 있습니다.');
+    setRealtimeState('Realtime disconnected', 'Showing the last snapshot as stale.');
   });
-  realtimeSocket.addEventListener('error', () => setRealtimeState('Realtime 오류', 'realtime gateway를 사용할 수 없어 query snapshot만 표시됩니다.'));
+  realtimeSocket.addEventListener('error', () => setRealtimeState('Realtime error', 'Realtime is unavailable. Showing query snapshots only.'));
 }
 
 function applyRealtimePayload(channels) {
@@ -281,20 +294,20 @@ function renderOverview(response) {
   const meta = response?.meta || {};
   const balances = Array.isArray(data.balances) ? data.balances : [];
   const positions = Array.isArray(data.positions) ? data.positions : [];
-  const healthState = loaded ? (data.state_health || '알 수 없음') : '알 수 없음';
+  const healthState = loaded ? (data.state_health || 'Unknown') : 'Unknown';
   const primaryBalance = balances[0] || null;
-  const killSwitch = loaded ? (data.kill_switch || '알 수 없음') : '알 수 없음';
+  const killSwitch = loaded ? (data.kill_switch || 'Unknown') : 'Unknown';
   elements.accountHealthBadge.textContent = healthState;
   elements.accountHealthBadge.className = `badge ${badgeClass(healthState)}`;
   elements.accountHealthList.innerHTML = [
-    listRow('범위', loaded ? (data.account_id || 'main') : '알 수 없음'),
-    listRow('소스', loaded ? 'query projection + realtime overlay' : '알 수 없음'),
-    listRow('freshness', loaded ? freshnessLabel(meta.freshness_ms) : '알 수 없음'),
-    listRow('snapshot', loaded ? String(meta.snapshot_version || '--') : '알 수 없음'),
-    listRow('잔고', primaryBalance ? `${primaryBalance.asset || 'asset'} ${formatValue(primaryBalance.available_balance)}` : (loaded ? '보고된 값 없음' : '알 수 없음')),
-    listRow('포지션', loaded ? `${positions.length}개 라이브 슬롯` : '알 수 없음'),
+    listRow('Scope', loaded ? (data.account_id || 'main') : 'Unknown'),
+    listRow('Source', loaded ? 'query projection + realtime overlay' : 'Unknown'),
+    listRow('Freshness', loaded ? freshnessLabel(meta.freshness_ms) : 'Unknown'),
+    listRow('Snapshot', loaded ? String(meta.snapshot_version || '--') : 'Unknown'),
+    listRow('Balance', primaryBalance ? `${primaryBalance.asset || 'asset'} ${formatValue(primaryBalance.available_balance)}` : (loaded ? 'No reported balance' : 'Unknown')),
+    listRow('Positions', loaded ? `${positions.length} live slots` : 'Unknown'),
   ].join('');
-  elements.freshnessChip.textContent = loaded ? freshnessLabel(meta.freshness_ms) : '알 수 없음';
+  elements.freshnessChip.textContent = loaded ? freshnessLabel(meta.freshness_ms) : 'Unknown';
   elements.killSwitchChip.textContent = killSwitch;
   elements.killSwitchChip.className = `badge ${badgeClass(killSwitch)}`;
 }
@@ -302,24 +315,24 @@ function renderOverview(response) {
 function renderStrategies(response) {
   const loaded = hasResponse(response);
   const items = Array.isArray(response?.data) ? response.data : [];
-  elements.strategyRuntimeBadge.textContent = loaded ? `${items.length}개 전략` : '알 수 없음';
+  elements.strategyRuntimeBadge.textContent = loaded ? `${items.length} strategies` : 'Unknown';
   elements.strategyRuntimeBadge.className = `badge ${loaded ? 'section-badge' : 'is-muted'}`;
   elements.strategyRuntimeList.innerHTML = items.length
     ? items.slice(0, 4).map((item) => listRow(item.strategy_id, `${safeText(item.desired_state, 'desired ?')} / ${safeText(item.accepted_state || item.decision, 'accepted ?')} / ${safeText(item.observed_state, 'observed ?')}`)).join('')
-    : `<p class="proposal-empty">${loaded ? '아직 projection된 전략 runtime view가 없습니다.' : '첫 projection 전까지 전략 runtime 상태를 알 수 없습니다.'}</p>`;
-  elements.signalsTabCopy.textContent = items.length ? `${items[0].strategy_id} 전략은 desired ${safeText(items[0].desired_state, '알 수 없음')}, accepted ${safeText(items[0].accepted_state || items[0].decision, '알 수 없음')}, observed ${safeText(items[0].observed_state, '알 수 없음')} 상태입니다.` : (loaded ? '아직 projection된 전략 runtime view가 없습니다.' : '전략 runtime 상태를 알 수 없습니다.');
-  elements.strategyTabCopy.textContent = items.length ? `promotion gate에서 ${items.length}개 전략 결정을 제공하고 있습니다.` : (loaded ? '평가가 실행되면 promotion gate 이력이 표시됩니다.' : 'promotion gate 상태를 알 수 없습니다.');
+    : `<p class="proposal-empty">${loaded ? 'No projected strategy runtime view yet.' : 'Strategy runtime is unknown until the first projection arrives.'}</p>`;
+  elements.signalsTabCopy.textContent = items.length ? `${items[0].strategy_id} is desired ${safeText(items[0].desired_state, 'Unknown')}, accepted ${safeText(items[0].accepted_state || items[0].decision, 'Unknown')}, observed ${safeText(items[0].observed_state, 'Unknown')}.` : (loaded ? 'No projected strategy runtime view yet.' : 'Strategy runtime is unknown.');
+  elements.strategyTabCopy.textContent = items.length ? `Promotion gate is currently serving ${items.length} strategy decisions.` : (loaded ? 'Promotion gate history will appear after evaluation runs.' : 'Promotion gate state is unknown.');
 }
 
 function renderOrders(response) {
   const loaded = hasResponse(response);
   const items = Array.isArray(response?.data) ? response.data : [];
   latestOrders = items;
-  elements.ordersBadge.textContent = loaded ? `${items.length}건` : '알 수 없음';
+  elements.ordersBadge.textContent = loaded ? `${items.length} rows` : 'Unknown';
   elements.ordersBadge.className = `badge ${loaded ? 'section-badge' : 'is-muted'}`;
   elements.ordersTableBody.innerHTML = items.length
-    ? items.slice(0, 8).map((item, index) => `<tr data-order-index="${index}"><td>${item.internal_order_id}</td><td>${item.source?.signal_id || 'n/a'}</td><td>${item.terminal_state || 'open'}</td><td>${item.pending_state || 'none'}</td></tr>`).join('')
-    : `<tr><td colspan="4">${loaded ? '표시할 주문 lineage가 없습니다.' : '첫 projection 전까지 주문 lifecycle 상태를 알 수 없습니다.'}</td></tr>`;
+    ? items.slice(0, 8).map((item, index) => `<tr data-order-index="${index}"><td>${escapeHtml(item.internal_order_id || '')}</td><td>${escapeHtml(item.source?.signal_id || 'n/a')}</td><td>${escapeHtml(item.terminal_state || 'open')}</td><td>${escapeHtml(item.pending_state || 'none')}</td></tr>`).join('')
+    : `<tr><td colspan="4">${loaded ? 'No order lineage available.' : 'Order lifecycle state is unknown until the first projection arrives.'}</td></tr>`;
   elements.ordersTableBody.querySelectorAll('[data-order-index]').forEach((row) => {
     row.addEventListener('click', () => selectOrder(Number(row.dataset.orderIndex || '0')));
   });
@@ -333,39 +346,39 @@ function selectOrder(index) {
   if (!item) {
     return;
   }
-  elements.orderDetailBadge.textContent = item.pending_state || item.terminal_state || '대기';
+  elements.orderDetailBadge.textContent = item.pending_state || item.terminal_state || 'Pending';
   elements.orderDetailBadge.className = `badge ${badgeClass(item.pending_state || item.terminal_state)}`;
-  elements.orderDetailTimeline.textContent = [item.pending_state, item.terminal_state].filter(Boolean).join(' -> ') || '표시할 타임라인이 없습니다';
-  elements.orderDetailExecution.textContent = item.exchange_order_id || 'Execution ack 대기 중';
-  elements.orderDetailPortfolio.textContent = item.fills?.length ? `${item.fills.length}건 fill 연결됨` : 'Portfolio truth가 아직 연결되지 않았습니다';
-  elements.orderDetailRecon.textContent = item.pending_state === 'ReconciliationRequired' ? 'Reconciliation 필요' : '명시적 reconciliation hold 없음';
+  elements.orderDetailTimeline.textContent = [item.pending_state, item.terminal_state].filter(Boolean).join(' -> ') || 'No timeline available';
+  elements.orderDetailExecution.textContent = item.exchange_order_id || 'Waiting for execution ack';
+  elements.orderDetailPortfolio.textContent = item.fills?.length ? `${item.fills.length} fills linked` : 'No portfolio truth linked yet';
+  elements.orderDetailRecon.textContent = item.pending_state === 'ReconciliationRequired' ? 'Reconciliation required' : 'No explicit reconciliation hold';
 }
 
 function renderPositions(response) {
   const loaded = hasResponse(response);
   const items = Array.isArray(response?.data) ? response.data : [];
-  elements.positionsBadge.textContent = loaded ? `${items.length}개 포지션` : '알 수 없음';
+  elements.positionsBadge.textContent = loaded ? `${items.length} positions` : 'Unknown';
   elements.positionsBadge.className = `badge ${loaded ? 'section-badge' : 'is-muted'}`;
   elements.positionsTableBody.innerHTML = items.length
-    ? items.slice(0, 8).map((item) => `<tr><td>${item.symbol}</td><td>${formatValue(item.qty)}</td><td>${formatSignedValue(item.unrealized_pnl)}</td><td>${safeText(item.position_side, '알 수 없음')}</td></tr>`).join('')
-    : `<tr><td colspan="4">${loaded ? '표시할 포지션이 없습니다.' : '첫 projection 전까지 포지션 리스크를 알 수 없습니다.'}</td></tr>`;
+    ? items.slice(0, 8).map((item) => `<tr><td>${item.symbol}</td><td>${formatValue(item.qty)}</td><td>${formatSignedValue(item.unrealized_pnl)}</td><td>${safeText(item.position_side, 'Unknown')}</td></tr>`).join('')
+    : `<tr><td colspan="4">${loaded ? 'No positions to display.' : 'Position risk is unknown until the first projection arrives.'}</td></tr>`;
   elements.contextActionsList.innerHTML = items.length
-    ? items.slice(0, 3).map((item) => listRow(item.symbol, `${safeText(item.position_side, '알 수 없음')} / entry ${formatValue(item.entry_price)} / mark ${formatValue(item.mark_price)}`)).join('')
-    : `<p class="proposal-empty">${loaded ? '감독할 실시간 포지션이 없습니다.' : '포지션 리스크 상태를 알 수 없습니다.'}</p>`;
+    ? items.slice(0, 3).map((item) => listRow(item.symbol, `${safeText(item.position_side, 'Unknown')} / entry ${formatValue(item.entry_price)} / mark ${formatValue(item.mark_price)}`)).join('')
+    : `<p class="proposal-empty">${loaded ? 'No live positions to supervise.' : 'Position risk state is unknown.'}</p>`;
   elements.riskBadgeBar.innerHTML = [
-    riskPill('총 노출', loaded ? (items.length ? '활성' : '평탄') : '알 수 없음', loaded ? (items.length ? 'warn' : 'ok') : 'muted'),
-    riskPill('마켓 데이터 freshness', loaded ? 'projection 기준' : '알 수 없음', loaded ? 'info' : 'muted'),
-    riskPill('Kill switch posture', elements.killSwitchChip.textContent || '알 수 없음', badgeTone(elements.killSwitchChip.textContent)),
+    riskPill('Gross exposure', loaded ? (items.length ? 'active' : 'flat') : 'Unknown', loaded ? (items.length ? 'warn' : 'ok') : 'muted'),
+    riskPill('Market-data freshness', loaded ? 'projection based' : 'Unknown', loaded ? 'info' : 'muted'),
+    riskPill('Kill switch posture', elements.killSwitchChip.textContent || 'Unknown', badgeTone(elements.killSwitchChip.textContent)),
   ].join('');
-  elements.riskBadge.textContent = loaded ? (items.length ? 'watch' : 'clear') : '알 수 없음';
+  elements.riskBadge.textContent = loaded ? (items.length ? 'watch' : 'clear') : 'Unknown';
   elements.riskBadge.className = `badge ${loaded ? (items.length ? 'is-degraded' : 'is-ready') : 'is-muted'}`;
-  elements.contextBadge.textContent = loaded ? (items.length ? 'observed live' : 'clear') : '알 수 없음';
+  elements.contextBadge.textContent = loaded ? (items.length ? 'observed live' : 'clear') : 'Unknown';
 }
 
 function renderReconciliation(response) {
   const data = response?.data || {};
   const loaded = hasResponse(response);
-  elements.reconTabCopy.textContent = loaded ? `Canonical state는 ${safeText(data.state_health, '알 수 없음')}이며 completeness는 ${safeText(data.completeness, '알 수 없음')}입니다.` : '첫 projection 전까지 reconciliation 상태를 알 수 없습니다.';
+  elements.reconTabCopy.textContent = loaded ? `Canonical state is ${safeText(data.state_health, 'Unknown')} and completeness is ${safeText(data.completeness, 'Unknown')}.` : 'Reconciliation state is unknown until the first projection arrives.';
 }
 
 function renderServices(response) {
@@ -373,25 +386,25 @@ function renderServices(response) {
   const entries = Object.entries(data);
   elements.serviceHealthList.innerHTML = entries.length
     ? entries.slice(0, 3).map(([name, value]) => listRow(`service ${name}`, String(value))).join('')
-    : '<p class="proposal-empty">service health projection이 아직 로드되지 않았습니다.</p>';
+    : '<p class="proposal-empty">Service-health projection has not loaded yet.</p>';
 }
 
 function renderIncidents(response) {
   const loaded = hasResponse(response);
   const items = Array.isArray(response?.items) ? response.items : (Array.isArray(response?.data) ? response.data : []);
-  elements.incidentBadge.textContent = loaded ? `${items.length}건 open` : '알 수 없음';
+  elements.incidentBadge.textContent = loaded ? `${items.length} open` : 'Unknown';
   elements.incidentBadge.className = `badge ${loaded ? (items.length > 0 ? 'is-degraded' : 'section-badge') : 'is-muted'}`;
   elements.incidentList.innerHTML = items.length
     ? items.slice(0, 6).map((item) => incidentRow(item)).join('')
-    : `<p class="proposal-empty">${loaded ? '활성 인시던트 또는 알림이 없습니다.' : '첫 alert projection 전까지 인시던트 상태를 알 수 없습니다.'}</p>`;
+    : `<p class="proposal-empty">${loaded ? 'No active incidents or alerts.' : 'Incident state is unknown until the first alert projection arrives.'}</p>`;
 }
 
 function incidentRow(item) {
-  const title = item.title || item.code || '인시던트';
+  const title = item.title || item.code || 'Incident';
   const severity = (item.severity || 'information').toUpperCase();
   const source = item.source || 'system';
-  const message = item.message || '상세 정보가 없습니다.';
-  return `<div class="review-history-item"><span>${title}</span><strong>${severity}</strong><small>${source} - ${message}</small></div>`;
+  const message = item.message || 'No details available.';
+  return `<div class="review-history-item"><span>${escapeHtml(title)}</span><strong>${escapeHtml(severity)}</strong><small>${escapeHtml(source)} - ${escapeHtml(message)}</small></div>`;
 }
 
 function renderProposalQueue(queueResponse, reviewsResponse) {
@@ -408,18 +421,18 @@ function renderProposalQueue(queueResponse, reviewsResponse) {
   const selectedProposal = items.find((item) => item.proposal_id === selectedProposalId) || null;
   const latestReview = selectedProposal ? reviews.find((item) => item.proposal_id === selectedProposal.proposal_id && item.status !== 'CREATED') : null;
   const recentDecisions = reviews.filter((item) => item.status !== 'CREATED');
-  elements.approvalBadge.textContent = queueLoaded ? `${pendingItems.length}건 대기` : '알 수 없음';
+  elements.approvalBadge.textContent = queueLoaded ? `${pendingItems.length} pending` : 'Unknown';
   elements.approvalBadge.className = `badge ${queueLoaded ? (pendingItems.length > 0 ? 'is-degraded' : 'is-ready') : 'is-muted'}`;
-  elements.proposalHistoryBadge.textContent = reviewsLoaded ? `${recentDecisions.length}건` : '알 수 없음';
+  elements.proposalHistoryBadge.textContent = reviewsLoaded ? `${recentDecisions.length} decisions` : 'Unknown';
   elements.proposalHistoryBadge.className = `badge ${reviewsLoaded ? 'section-badge' : 'is-muted'}`;
   elements.proposalQueueList.innerHTML = items.length
     ? items.slice(0, 6).map((item) => `
-      <button class="proposal-queue-item${item.proposal_id === selectedProposalId ? ' is-selected' : ''}" type="button" data-proposal-id="${item.proposal_id}">
-        <span>${item.instrument?.symbol || item.proposal_id}</span>
-        <strong>${item.status}</strong>
+      <button class="proposal-queue-item${item.proposal_id === selectedProposalId ? ' is-selected' : ''}" type="button" data-proposal-id="${escapeAttr(item.proposal_id)}">
+        <span>${escapeHtml(item.instrument?.symbol || item.proposal_id)}</span>
+        <strong>${escapeHtml(item.status || '')}</strong>
       </button>
     `).join('')
-    : '<p class="proposal-empty">검토할 제안이 없습니다.</p>';
+    : '<p class="proposal-empty">No proposals to review.</p>';
   elements.proposalQueueList.querySelectorAll('[data-proposal-id]').forEach((button) => {
     button.addEventListener('click', () => {
       selectedProposalId = button.dataset.proposalId;
@@ -428,35 +441,35 @@ function renderProposalQueue(queueResponse, reviewsResponse) {
   });
   elements.proposalHistoryList.innerHTML = recentDecisions.length
     ? recentDecisions.slice(0, 6).map((item) => reviewHistoryRow(item)).join('')
-    : '<p class="proposal-empty">기록된 검토 결정이 아직 없습니다.</p>';
+    : '<p class="proposal-empty">No review decisions recorded yet.</p>';
   const reviewDisabled = !selectedProposal || selectedProposal.status !== 'PENDING' || !authToken || !hasPermission('proposal.review');
   elements.proposalApproveButton.disabled = reviewDisabled;
   elements.proposalHoldButton.disabled = reviewDisabled;
   elements.proposalRejectButton.disabled = reviewDisabled;
   const reviewTitle = !authToken
-    ? '제안을 검토하려면 로그인해야 합니다.'
-    : (!hasPermission('proposal.review') ? '권한 부족: proposal.review' : '검토 가능');
+    ? 'Sign in to review proposals.'
+    : (!hasPermission('proposal.review') ? 'Missing permission: proposal.review' : 'Ready to review');
   elements.proposalApproveButton.title = reviewTitle;
   elements.proposalHoldButton.title = reviewTitle;
   elements.proposalRejectButton.title = reviewTitle;
   if (!selectedProposal) {
-    elements.proposalReviewState.textContent = '선택된 제안이 없습니다.';
+    elements.proposalReviewState.textContent = 'No proposal selected.';
     return;
   }
   const summaryParts = [
     `${selectedProposal.instrument?.symbol || selectedProposal.proposal_id}`,
-    `strategy ${selectedProposal.strategy_id || '알 수 없음'}`,
+    `strategy ${selectedProposal.strategy_id || 'Unknown'}`,
     `status ${selectedProposal.status}`,
   ];
   if (latestReview) {
-    summaryParts.push(`최근 검토 ${latestReview.status.toLowerCase()} / ${latestReview.reviewer || 'system'}`);
+    summaryParts.push(`last review ${latestReview.status.toLowerCase()} / ${latestReview.reviewer || 'system'}`);
   }
   elements.proposalReviewState.textContent = summaryParts.join(' - ');
 }
 
 function reviewHistoryRow(item) {
   const reason = item.reason ? ` - ${item.reason}` : '';
-  return `<div class="review-history-item${item.proposal_id === selectedProposalId ? ' is-selected' : ''}"><span>${item.proposal_id}</span><strong>${item.status}</strong><small>${item.reviewer || 'system'} / ${formatTimestamp(item.occurred_at)}${reason}</small></div>`;
+  return `<div class="review-history-item${item.proposal_id === selectedProposalId ? ' is-selected' : ''}"><span>${escapeHtml(item.proposal_id || '')}</span><strong>${escapeHtml(item.status || '')}</strong><small>${escapeHtml(item.reviewer || 'system')} / ${escapeHtml(formatTimestamp(item.occurred_at))}${escapeHtml(reason)}</small></div>`;
 }
 
 function renderControlState(controlState) {
@@ -465,13 +478,13 @@ function renderControlState(controlState) {
   elements.killSwitchChip.className = `badge ${badgeClass(killSwitch)}`;
   const latestAction = Array.isArray(controlState?.recent_actions) ? controlState.recent_actions[0] : null;
   elements.contextActionsList.innerHTML = [
-    listRow('Desired', latestAction?.desired || latestAction?.type || '요청 없음'),
-    listRow('Accepted', latestAction ? formatTimestamp(latestAction.occurred_at) : '아직 accepted 상태 없음'),
-    listRow('Observed', latestAction?.observed || 'observed 대기 중'),
+    listRow('Desired', latestAction?.desired || latestAction?.type || 'No request'),
+    listRow('Accepted', latestAction ? formatTimestamp(latestAction.occurred_at) : 'No accepted state yet'),
+    listRow('Observed', latestAction?.observed || 'Waiting for observed state'),
     listRow('Kill switch', killSwitch),
   ].join('');
   elements.commandObserved.textContent = latestAction
-    ? `Observed control state: ${latestAction.type} / ${latestAction.actor || 'system'} / ${formatTimestamp(latestAction.occurred_at)} / ${latestAction.observed || 'observed 대기 중'}`
+    ? `Observed control state: ${latestAction.type} / ${latestAction.actor || 'system'} / ${formatTimestamp(latestAction.occurred_at)} / ${latestAction.observed || 'Waiting for observed state'}`
     : `Observed control state: kill switch ${killSwitch.toLowerCase()}.`;
 }
 
@@ -479,7 +492,7 @@ function setRealtimeState(title, copy) {
   elements.pollState.textContent = title;
   elements.staleBannerTitle.textContent = title;
   elements.staleBannerCopy.textContent = copy;
-  elements.staleBanner.classList.toggle('is-warning', title !== 'Realtime 연결됨');
+  elements.staleBanner.classList.toggle('is-warning', title !== 'Realtime connected');
 }
 
 async function fetchJSON(url) {
@@ -501,7 +514,7 @@ async function startGoogleLogin() {
   const response = await fetch('/api/auth-service/auth/google/url').catch(() => null);
   const payload = await response?.json().catch(() => null);
   if (!response || !response.ok || !payload?.url) {
-    elements.authSessionDetail.textContent = payload?.error || 'Google 로그인 시작에 실패했습니다.';
+    elements.authSessionDetail.textContent = payload?.error || 'Could not start Google sign-in.';
     return;
   }
   window.location.href = payload.url;
@@ -509,13 +522,13 @@ async function startGoogleLogin() {
 
 async function startGoogleStepUp() {
   if (!authToken) {
-    elements.authSessionDetail.textContent = 'Step-up 인증을 요청하기 전에 먼저 로그인해야 합니다.';
+    elements.authSessionDetail.textContent = 'Sign in before requesting step-up.';
     return;
   }
   const response = await fetch('/api/auth-service/auth/google/url').catch(() => null);
   const payload = await response?.json().catch(() => null);
   if (!response || !response.ok || !payload?.url) {
-    elements.authSessionDetail.textContent = payload?.error || 'Google step-up 시작에 실패했습니다.';
+    elements.authSessionDetail.textContent = payload?.error || 'Could not start Google step-up.';
     return;
   }
   localStorage.setItem('clab-step-up-pending', 'true');
@@ -524,16 +537,16 @@ async function startGoogleStepUp() {
 
 async function submitProposalReview(action) {
   if (!authToken) {
-    elements.proposalReviewState.textContent = '제안을 검토하려면 먼저 로그인해야 합니다.';
+    elements.proposalReviewState.textContent = 'Sign in to review proposals.';
     return;
   }
   if (!selectedProposalId) {
-    elements.proposalReviewState.textContent = '먼저 제안을 선택하세요.';
+    elements.proposalReviewState.textContent = 'Select a proposal first.';
     return;
   }
   const reason = elements.proposalReasonInput.value.trim();
   if (action === 'reject' && !reason) {
-    elements.proposalReviewState.textContent = 'Reject에는 사유가 필요합니다.';
+    elements.proposalReviewState.textContent = 'A reason is required for reject.';
     return;
   }
   const response = await fetch(`/api/proposal-service/queue/${encodeURIComponent(selectedProposalId)}/${action}`, {
@@ -547,11 +560,11 @@ async function submitProposalReview(action) {
       clearAuthSession(false);
       updateAuthSessionUI();
     }
-    elements.proposalReviewState.textContent = payload?.error || '제안 검토에 실패했습니다.';
+    elements.proposalReviewState.textContent = payload?.error || 'Proposal review failed.';
     return;
   }
   elements.proposalReasonInput.value = '';
-  elements.proposalReviewState.textContent = `제안 ${payload?.proposal_id || selectedProposalId}이(가) ${payload?.status || action.toUpperCase()} 상태로 기록되었습니다.`;
+  elements.proposalReviewState.textContent = `Proposal ${payload?.proposal_id || selectedProposalId} recorded as ${payload?.status || action.toUpperCase()}.`;
   await refreshDashboard();
 }
 
@@ -559,22 +572,25 @@ function clearAuthSession(rerender = true) {
   authToken = '';
   authStepUp = false;
   authPermissions = [];
+  authSessionProfile = null;
+  authSessionNotice = '';
   localStorage.removeItem(authStorageKey);
   if (realtimeSocket) {
     realtimeSocket.close();
     realtimeSocket = null;
   }
-  setRealtimeState('Realtime 잠금', 'realtime gateway의 live patch를 보려면 로그인해야 합니다.');
+  setRealtimeState('Realtime locked', 'Sign in to view live patches.');
   if (rerender) {
     updateAuthSessionUI();
   }
 }
 
 function updateAuthSessionUI(payload = null) {
+  const sessionPayload = payload || authSessionProfile || {};
   if (!authToken) {
-    elements.authSessionState.textContent = '잠금';
-    elements.authSessionDetail.textContent = '보호된 조회를 열려면 Google로 로그인해야 합니다.';
-    elements.authPermissionsList.innerHTML = '<p class="proposal-empty">로드된 권한이 없습니다.</p>';
+    elements.authSessionState.textContent = 'Locked';
+    elements.authSessionDetail.textContent = authSessionNotice || 'Sign in with Google to unlock protected views.';
+    elements.authPermissionsList.innerHTML = '<p class="proposal-empty">No permissions loaded.</p>';
     elements.authGoogleLoginButton.style.display = '';
     elements.authStepUpButton.disabled = true;
     elements.authStepUpButton.style.display = 'none';
@@ -588,16 +604,41 @@ function updateAuthSessionUI(payload = null) {
   elements.authLogoutButton.style.display = '';
   authStepUp = payload?.step_up === true || authStepUp;
   authPermissions = Array.isArray(payload?.permissions) ? payload.permissions : authPermissions;
-  elements.authSessionState.textContent = authStepUp ? 'step-up 활성' : (payload?.role || '운영 세션');
-  elements.authSessionDetail.textContent = payload?.subject
-    ? `${payload.subject} 계정이 인증되었습니다.${authStepUp ? ' 비상 제어용 step-up이 활성화되었습니다.' : ''}`
-    : `저장된 운영 세션을 복원했습니다.${authStepUp ? ' 비상 제어용 step-up이 활성화되었습니다.' : ''}`;
+  elements.authSessionState.textContent = authStepUp ? 'Step-up active' : (sessionPayload.role || 'Signed in');
+  elements.authSessionDetail.textContent = [formatAuthSessionDetail(sessionPayload, !payload), authSessionNotice].filter(Boolean).join(' ');
   elements.authPermissionsList.innerHTML = authPermissions.length
-    ? authPermissions.slice(0, 6).map((permission) => listRow('권한', permission)).join('')
-    : '<p class="proposal-empty">로드된 권한이 없습니다.</p>';
+    ? authPermissions.slice(0, 6).map((permission) => listRow('Permission', permission)).join('')
+    : '<p class="proposal-empty">No permissions loaded.</p>';
   elements.authStepUpButton.disabled = false;
   elements.authLogoutButton.disabled = false;
   updateActionAvailability();
+}
+
+function formatOAuthRedirectError(error, description, isStepUp) {
+  if (description) {
+    return description;
+  }
+  if (error === 'access_denied') {
+    return isStepUp ? 'Google step-up was canceled.' : 'Google sign-in was canceled.';
+  }
+  return isStepUp ? 'Google step-up did not complete.' : 'Google sign-in did not complete.';
+}
+
+function formatAuthSessionDetail(sessionPayload, restored) {
+  const identity = [sessionPayload?.subject, sessionPayload?.role].filter(Boolean).join(' - ');
+  const parts = [];
+
+  if (restored) {
+    parts.push(identity ? `Restored ${identity}.` : 'Session restored.');
+  } else {
+    parts.push(identity ? `Signed in as ${identity}.` : 'Signed in.');
+  }
+
+  if (authStepUp) {
+    parts.push('Step-up active.');
+  }
+
+  return parts.join(' ');
 }
 
 function updateActionAvailability() {
@@ -609,18 +650,18 @@ function updateActionAvailability() {
     }
     if (!authToken) {
       button.disabled = true;
-      button.title = 'governed action을 보거나 실행하려면 로그인해야 합니다.';
+      button.title = 'Sign in to use governed actions.';
       return;
     }
     if (!hasPermission(permission)) {
       button.disabled = true;
-      button.title = `권한 부족: ${permission}`;
+      button.title = `Missing permission: ${permission}`;
       return;
     }
     button.disabled = false;
-    button.title = '제출 전 step-up 인증이 필요합니다.';
+    button.title = 'Step-up is required before submit.';
   });
-  elements.commandConsoleBadge.textContent = authToken ? (authStepUp ? 'step-up 활성' : '요청 준비') : '요청 전용';
+  elements.commandConsoleBadge.textContent = authToken ? (authStepUp ? 'Step-up active' : 'Ready') : 'Sign-in required';
   elements.commandConsoleBadge.className = `badge action-badge ${authToken ? (authStepUp ? 'is-ready' : 'is-info') : 'is-muted'}`;
 }
 
@@ -631,16 +672,16 @@ function hasPermission(permission) {
 function openCommandDialog(command) {
   commandIntent = command;
   const supported = supportedControlCommands[command];
-  elements.commandDialogTitle.textContent = `${command} 확인`;
+  elements.commandDialogTitle.textContent = `Confirm ${command}`;
   elements.commandDialogBody.textContent = supported
-    ? `Desired state: ${command}. 이 액션은 현재 control-service intake path에 연결되어 있으며 step-up 인증이 필요합니다. 실제 실행 효과는 downstream observed state로 별도 확인해야 합니다.`
-    : `Desired state: ${command}. 아직 planned 상태인 command이므로 backend endpoint 호출 없이 요청 의도만 기록합니다.`;
-  elements.commandScopeText.textContent = supported?.scope || 'planned scope가 정의되지 않았습니다';
-  elements.commandEffectText.textContent = supported?.effect || 'planned command 전용입니다.';
-  elements.commandRiskText.textContent = supported?.residualRisk || '아직 live backend path가 없습니다.';
-  elements.commandApprovalText.textContent = supported?.approval || '아직 live backend path가 없습니다.';
+    ? `Desired state: ${command}. This action uses the live control-service intake path and requires step-up. Confirm final effect from downstream observed state.`
+    : `Desired state: ${command}. This command is still planned and only records intent.`;
+  elements.commandScopeText.textContent = supported?.scope || 'No planned scope defined.';
+  elements.commandEffectText.textContent = supported?.effect || 'Planned command only.';
+  elements.commandRiskText.textContent = supported?.residualRisk || 'No live backend path yet.';
+  elements.commandApprovalText.textContent = supported?.approval || 'No live backend path yet.';
   elements.commandConfirmButton.className = supported?.actionClass === 'danger' ? 'dialog-danger' : 'dialog-caution';
-  elements.commandConfirmButton.textContent = supported ? '요청 제출' : '요청 기록';
+  elements.commandConfirmButton.textContent = supported ? 'Submit request' : 'Record intent';
   elements.commandReasonInput.value = '';
   elements.commandDialog.showModal();
 }
@@ -649,21 +690,21 @@ async function handleCommandDialogClose() {
   if (elements.commandDialog.returnValue !== 'confirm' || !commandIntent) {
     return;
   }
-  const reason = elements.commandReasonInput.value.trim() || '사유 미입력';
+  const reason = elements.commandReasonInput.value.trim() || 'No reason provided';
   const supported = supportedControlCommands[commandIntent];
   if (supported) {
     if (!elements.commandReasonInput.value.trim()) {
-      elements.commandObserved.textContent = '고위험 governed action에는 사유가 필수입니다.';
+      elements.commandObserved.textContent = 'A reason is required for high-risk governed actions.';
       commandIntent = null;
       return;
     }
     if (!authToken) {
-      elements.commandObserved.textContent = '비상 제어를 실행하기 전에 먼저 로그인해야 합니다.';
+      elements.commandObserved.textContent = 'Sign in before sending this action.';
       commandIntent = null;
       return;
     }
     if (!authStepUp) {
-      elements.commandObserved.textContent = '비상 제어 실행 전 step-up 인증이 필요합니다.';
+      elements.commandObserved.textContent = 'Step-up is required before sending this action.';
       commandIntent = null;
       return;
     }
@@ -674,25 +715,45 @@ async function handleCommandDialogClose() {
     }).catch(() => null);
     const payload = await response?.json().catch(() => null);
     if (!response || !response.ok) {
-      elements.commandObserved.textContent = payload?.error || '비상 제어 요청에 실패했습니다.';
+      if (response?.status === 401) {
+        clearAuthSession(false);
+        updateAuthSessionUI();
+        connectRealtime();
+      }
+      elements.commandObserved.textContent = payload?.error || 'Control request failed.';
       commandIntent = null;
       return;
     }
     renderControlState(payload?.state);
-    elements.commandObserved.textContent = `Observed control state: ${payload?.action?.type || supported.label} 명령이 control-service에 accepted 되었습니다. 사유: ${reason}. 실제 실행 효과는 downstream에서 별도로 observed 됩니다.`;
+    elements.commandObserved.textContent = `Observed control state: ${payload?.action?.type || supported.label} accepted by control-service. Reason: ${reason}. Confirm final effect downstream.`;
     commandIntent = null;
     return;
   }
-  elements.commandObserved.textContent = `Desired command ${commandIntent} 요청이 기록되었습니다. 사유: ${reason}. 아직 live backend path에는 연결되지 않았습니다.`;
+  elements.commandObserved.textContent = `Desired command ${commandIntent} recorded. Reason: ${reason}. No live backend path yet.`;
   commandIntent = null;
 }
 
 function listRow(label, value) {
-  return `<div class="list-row"><span>${label}</span><strong>${value}</strong></div>`;
+  return `<div class="list-row"><span>${escapeHtml(String(label))}</span><strong>${escapeHtml(String(value))}</strong></div>`;
 }
 
 function riskPill(label, value) {
-  return `<div class="risk-pill"><span>${label}</span><strong>${value}</strong></div>`;
+  return `<div class="risk-pill"><span>${escapeHtml(String(label))}</span><strong>${escapeHtml(String(value))}</strong></div>`;
+}
+
+function escapeHtml(value) {
+  const div = document.createElement('div');
+  div.appendChild(document.createTextNode(String(value)));
+  return div.innerHTML;
+}
+
+function escapeAttr(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 function badgeClass(state) {
@@ -716,7 +777,7 @@ function badgeClass(state) {
 }
 
 function formatNumber(value) {
-  return typeof value === 'number' ? value.toFixed(2) : '알 수 없음';
+  return typeof value === 'number' ? value.toFixed(2) : 'Unknown';
 }
 
 function hasResponse(value) {
@@ -729,14 +790,14 @@ function safeText(value, fallback) {
 
 function freshnessLabel(value) {
   if (value === null || value === undefined) {
-    return '알 수 없음';
+    return 'Unknown';
   }
   return `${value} ms`;
 }
 
 function formatValue(value) {
   if (value === null || value === undefined || value === '') {
-    return '알 수 없음';
+    return 'Unknown';
   }
   const numeric = Number(value);
   if (!Number.isNaN(numeric)) {
@@ -747,7 +808,7 @@ function formatValue(value) {
 
 function formatSignedValue(value) {
   if (value === null || value === undefined || value === '') {
-    return '알 수 없음';
+    return 'Unknown';
   }
   const numeric = Number(value);
   if (Number.isNaN(numeric)) {
@@ -775,11 +836,11 @@ function badgeTone(state) {
 
 function formatTimestamp(value) {
   if (!value) {
-    return '시간 정보 없음';
+    return 'No timestamp';
   }
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) {
-    return '시간 정보 없음';
+    return 'No timestamp';
   }
   return parsed.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
 }
