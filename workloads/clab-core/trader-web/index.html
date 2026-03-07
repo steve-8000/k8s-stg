@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./styles.css?v=20260308a">
+    <link rel="stylesheet" href="./styles.css?v=20260308c">
   </head>
   <body>
     <div class="backdrop"></div>
@@ -20,120 +20,131 @@
             <h1>CLAB Trade</h1>
             <span class="badge static-badge">operator control system</span>
           </div>
-          <p class="lead compact-lead">Query snapshot, governed command posture, and realtime observation are shown separately so operators can see stale or ambiguous state instead of hidden smoothing.</p>
+          <p class="lead compact-lead">운영 현황, 전략 통제, 리스크 감독, 주문 lifecycle, 감사 이력을 분리된 운영 surface로 유지합니다. Query snapshot, governed command, realtime observation을 구분해 stale 또는 불확실한 상태를 숨기지 않습니다.</p>
+          <a href="./verification.html" class="verify-nav-link">검증 대시보드 &rarr;</a>
         </div>
         <div class="topbar-meta">
           <div class="meta-chip"><span class="meta-label">environment</span><strong id="env-chip">staging</strong></div>
           <div class="meta-chip"><span class="meta-label">venue</span><strong id="venue-chip">binance</strong></div>
-          <div class="meta-chip pulse-chip"><span class="pulse-dot"></span><span id="poll-state">connecting realtime</span></div>
-          <div class="meta-chip"><span class="meta-label">freshness</span><strong id="freshness-chip">--</strong></div>
-          <div class="meta-chip"><span class="meta-label">kill switch</span><strong id="kill-switch-chip">DEGRADED</strong></div>
+          <div class="meta-chip pulse-chip"><span class="pulse-dot"></span><span id="poll-state">realtime 연결 중</span></div>
+          <div class="meta-chip"><span class="meta-label">freshness</span><strong id="freshness-chip">알 수 없음</strong></div>
+          <div class="meta-chip"><span class="meta-label">kill switch</span><strong id="kill-switch-chip">알 수 없음</strong></div>
           <div class="auth-chip">
             <div class="auth-chip-head">
               <span class="meta-label">session</span>
-              <strong id="auth-session-state">locked</strong>
+              <strong id="auth-session-state">잠금</strong>
             </div>
             <div class="auth-chip-form">
-              <input id="auth-username-input" type="text" placeholder="operator">
-              <input id="auth-password-input" type="password" placeholder="password">
-              <button id="auth-login-button" type="button">Sign in</button>
-              <button id="auth-step-up-button" type="button">Step up</button>
-              <button id="auth-logout-button" type="button">Sign out</button>
+              <button id="auth-google-login-button" type="button">Google로 로그인</button>
+              <button id="auth-step-up-button" type="button">Step-up</button>
+              <button id="auth-logout-button" type="button">로그아웃</button>
             </div>
-            <p class="auth-chip-detail" id="auth-session-detail">Sign in to unlock protected queries.</p>
+            <p class="auth-chip-detail" id="auth-session-detail">보호된 조회를 보려면 로그인하세요.</p>
             <div class="data-list auth-permissions-list" id="auth-permissions-list"></div>
           </div>
         </div>
       </header>
 
       <section class="banner-panel panel" id="stale-banner">
-        <strong id="stale-banner-title">Realtime syncing</strong>
-        <p id="stale-banner-copy">Dashboard is waiting for the first Query API snapshot and realtime update stream.</p>
+        <strong id="stale-banner-title">Realtime 동기화 중</strong>
+        <p id="stale-banner-copy">첫 Query API snapshot과 realtime update stream을 기다리는 중입니다.</p>
       </section>
 
       <section class="control-grid">
         <aside class="rail rail-left panel">
           <div class="rail-section">
-            <div class="panel-header"><div><p class="section-kicker">Control and health</p><h3>Account health</h3></div><span class="badge" id="account-health-badge">loading</span></div>
+            <div class="panel-header"><div><p class="section-kicker">글로벌 운영 대시보드</p><h3>계정 건전성</h3></div><span class="badge" id="account-health-badge">알 수 없음</span></div>
+            <p class="widget-meta">scope account/main | source AccountHealthView | drill-down positions and risk</p>
             <div class="data-list" id="account-health-list"></div>
           </div>
           <div class="rail-section">
-            <div class="panel-header"><div><p class="section-kicker">Strategy runtime</p><h3>Promotion and signal posture</h3></div><span class="badge" id="strategy-runtime-badge">loading</span></div>
+            <div class="panel-header"><div><p class="section-kicker">전략 제어 센터</p><h3>desired / accepted / observed</h3></div><span class="badge" id="strategy-runtime-badge">알 수 없음</span></div>
+            <p class="widget-meta">scope strategy registry | source StrategyRuntimeView | drill-down strategy control</p>
             <div class="data-list" id="strategy-runtime-list"></div>
           </div>
           <div class="rail-section">
-            <div class="panel-header"><div><p class="section-kicker">Incident center</p><h3>Unresolved events</h3></div><span class="badge" id="incident-badge">0 open</span></div>
+            <div class="panel-header"><div><p class="section-kicker">인시던트 센터</p><h3>Severity queue</h3></div><span class="badge" id="incident-badge">알 수 없음</span></div>
+            <p class="widget-meta">scope environment and account | source IncidentView | drill-down incident timeline</p>
             <div class="data-list" id="incident-list"></div>
           </div>
           <div class="rail-section">
-            <div class="panel-header"><div><p class="section-kicker">Approval queue</p><h3>Proposal review</h3></div><span class="badge" id="approval-badge">loading</span></div>
+            <div class="panel-header"><div><p class="section-kicker">감사 및 승인</p><h3>제안 검토</h3></div><span class="badge" id="approval-badge">알 수 없음</span></div>
+            <p class="widget-meta">scope proposal workflow | source ApprovalRequestView | drill-down immutable review audit</p>
             <div class="data-list" id="proposal-queue-list"></div>
             <label class="command-form-field">
-              <span>Review reason</span>
-              <input id="proposal-reason-input" type="text" placeholder="Required for reject, optional for hold">
+              <span>검토 사유</span>
+              <input id="proposal-reason-input" type="text" placeholder="Reject는 필수, Hold는 선택">
             </label>
             <div class="command-stack compact-stack">
-              <button class="command-button" type="button" id="proposal-approve-button">Approve</button>
-              <button class="command-button" type="button" id="proposal-hold-button">Hold</button>
-              <button class="command-button danger" type="button" id="proposal-reject-button">Reject</button>
+              <button class="command-button" type="button" id="proposal-approve-button">승인</button>
+              <button class="command-button caution" type="button" id="proposal-hold-button">Hold</button>
+              <button class="command-button danger" type="button" id="proposal-reject-button">반려</button>
             </div>
-            <p class="command-observed" id="proposal-review-state">No proposal selected.</p>
+            <p class="command-observed" id="proposal-review-state">선택된 제안이 없습니다.</p>
           </div>
           <div class="rail-section">
-            <div class="panel-header"><div><p class="section-kicker">Review audit</p><h3>Recent decisions</h3></div><span class="badge" id="proposal-history-badge">0 items</span></div>
+            <div class="panel-header"><div><p class="section-kicker">검토 감사</p><h3>최근 결정</h3></div><span class="badge" id="proposal-history-badge">알 수 없음</span></div>
             <div class="data-list" id="proposal-history-list"></div>
           </div>
           <div class="rail-section">
-            <div class="panel-header"><div><p class="section-kicker">Emergency controls</p><h3>Governed commands</h3></div><span class="badge">observed</span></div>
+            <div class="panel-header"><div><p class="section-kicker">액션 콘솔</p><h3>Governed commands</h3></div><span class="badge action-badge" id="command-console-badge">요청 전용</span></div>
+            <p class="widget-meta">scope account/main | source command api | 고위험 액션은 사유, step-up, observed 확인이 필요</p>
             <div class="command-stack">
-              <button class="command-button" type="button" data-command="start" disabled>Start strategy (planned)</button>
-              <button class="command-button" type="button" data-command="pause" disabled>Pause strategy (planned)</button>
-              <button class="command-button" type="button" data-command="reconcile" disabled>Request reconciliation (planned)</button>
-              <button class="command-button danger" type="button" data-command="cancel-all">Cancel all</button>
-              <button class="command-button danger" type="button" data-command="flatten">Flatten positions</button>
-              <button class="command-button danger" type="button" data-command="kill-switch">Arm kill switch</button>
-              <button class="command-button" type="button" data-command="kill-switch-release">Release kill switch</button>
+              <button class="command-button" type="button" data-command="start" disabled>전략 시작 (예정)</button>
+              <button class="command-button" type="button" data-command="pause" disabled>전략 일시중지 (예정)</button>
+              <button class="command-button caution" type="button" data-command="reconcile" disabled>Reconciliation 요청 (예정)</button>
+              <button class="command-button danger" type="button" data-command="cancel-all">전체 취소</button>
+              <button class="command-button danger" type="button" data-command="flatten">포지션 평탄화</button>
+              <button class="command-button danger" type="button" data-command="kill-switch">Kill switch 활성화</button>
+              <button class="command-button caution" type="button" data-command="kill-switch-release">Kill switch 해제</button>
             </div>
-            <p class="command-observed" id="command-observed">Observed state: waiting for command submission. These actions are wired to the current control-service intake path; downstream execution effects may still lag or remain observational.</p>
+            <p class="command-observed" id="command-observed">Observed state: 명령 제출 대기 중입니다. 이 액션은 현재 control-service intake path에 연결되어 있지만, 실제 실행 효과는 지연되거나 관측 전 상태일 수 있습니다.</p>
           </div>
         </aside>
 
         <section class="rail rail-center panel">
           <div class="rail-section">
-            <div class="panel-header"><div><p class="section-kicker">Lifecycle and blotter</p><h3>Order lineage</h3></div><span class="badge" id="orders-badge">0 rows</span></div>
+            <div class="panel-header"><div><p class="section-kicker">주문 lifecycle / blotter</p><h3>Signal to execution trace</h3></div><span class="badge" id="orders-badge">알 수 없음</span></div>
+            <p class="widget-meta">scope account/main | source OrderLifecycleView | lifecycle path signal - risk - order - execution</p>
             <div class="table-wrap"><table class="data-table"><thead><tr><th>Order</th><th>Signal</th><th>State</th><th>Pending</th></tr></thead><tbody id="orders-table-body"></tbody></table></div>
           </div>
           <div class="rail-section detail-surface">
-            <div class="panel-header"><div><p class="section-kicker">Selected order</p><h3>Timeline and truth split</h3></div><span class="badge" id="order-detail-badge">idle</span></div>
+            <div class="panel-header"><div><p class="section-kicker">선택된 주문</p><h3>타임라인과 truth split</h3></div><span class="badge" id="order-detail-badge">알 수 없음</span></div>
+            <p class="widget-meta">scope selected order | source execution, portfolio, reconciliation projections | drill-down replay</p>
             <div class="detail-grid dual-detail">
-              <div><dt>Lifecycle</dt><dd id="order-detail-timeline">No order selected</dd></div>
-              <div><dt>Execution truth</dt><dd id="order-detail-execution">No order selected</dd></div>
-              <div><dt>Portfolio truth</dt><dd id="order-detail-portfolio">No order selected</dd></div>
-              <div><dt>Reconciliation</dt><dd id="order-detail-recon">No order selected</dd></div>
+              <div><dt>Lifecycle</dt><dd id="order-detail-timeline">선택된 주문이 없습니다</dd></div>
+              <div><dt>Execution truth</dt><dd id="order-detail-execution">선택된 주문이 없습니다</dd></div>
+              <div><dt>Portfolio truth</dt><dd id="order-detail-portfolio">선택된 주문이 없습니다</dd></div>
+              <div><dt>Reconciliation</dt><dd id="order-detail-recon">선택된 주문이 없습니다</dd></div>
             </div>
           </div>
           <div class="rail-section tabbed-surface">
-            <div class="panel-header"><div><p class="section-kicker">Workbench tabs</p><h3>Signals, reconciliation, strategy</h3></div><span class="badge" id="tab-badge">snapshot</span></div>
+            <div class="panel-header"><div><p class="section-kicker">운영 탭</p><h3>Signals, reconciliation, strategy</h3></div><span class="badge" id="tab-badge">projection</span></div>
             <div class="tab-grid">
-              <div class="tab-card"><strong>Signals</strong><p id="signals-tab-copy">Waiting for strategy data.</p></div>
-              <div class="tab-card"><strong>Reconciliation</strong><p id="recon-tab-copy">Waiting for reconciliation status.</p></div>
-              <div class="tab-card"><strong>Strategy</strong><p id="strategy-tab-copy">Waiting for promotion gate decisions.</p></div>
+              <div class="tab-card"><strong>Signals</strong><p id="signals-tab-copy">전략 데이터를 기다리는 중입니다.</p></div>
+              <div class="tab-card"><strong>Reconciliation</strong><p id="recon-tab-copy">Reconciliation 상태를 기다리는 중입니다.</p></div>
+              <div class="tab-card"><strong>Strategy</strong><p id="strategy-tab-copy">promotion gate 결정을 기다리는 중입니다.</p></div>
             </div>
           </div>
         </section>
 
         <aside class="rail rail-right panel">
           <div class="rail-section">
-            <div class="panel-header"><div><p class="section-kicker">Positions and risk</p><h3>Risk badge bar</h3></div><span class="badge" id="risk-badge">watch</span></div>
+            <div class="panel-header"><div><p class="section-kicker">포지션 및 리스크 감독</p><h3>안전 상태 스트립</h3></div><span class="badge" id="risk-badge">알 수 없음</span></div>
+            <p class="widget-meta">scope account/main | source LivePositionRiskView and ReconciliationStatusView | threshold bands over gradients</p>
             <div class="badge-bar" id="risk-badge-bar"></div>
           </div>
           <div class="rail-section">
-            <div class="panel-header"><div><p class="section-kicker">Open positions</p><h3>Live position risk</h3></div><span class="badge" id="positions-badge">0 positions</span></div>
+            <div class="panel-header"><div><p class="section-kicker">오픈 포지션</p><h3>실시간 포지션 리스크</h3></div><span class="badge" id="positions-badge">알 수 없음</span></div>
+            <p class="widget-meta">scope account/main | source LivePositionRiskView | one-way or hedge mode stays explicit</p>
             <div class="table-wrap"><table class="data-table"><thead><tr><th>Symbol</th><th>Qty</th><th>PnL</th><th>Risk</th></tr></thead><tbody id="positions-table-body"></tbody></table></div>
           </div>
           <div class="rail-section">
-            <div class="panel-header"><div><p class="section-kicker">Context actions</p><h3>Desired vs observed</h3></div><span class="badge" id="context-badge">idle</span></div>
+            <div class="panel-header"><div><p class="section-kicker">제어 상태</p><h3>desired vs accepted vs observed</h3></div><span class="badge" id="context-badge">알 수 없음</span></div>
+            <p class="widget-meta">scope command path | source control state and service health | downstream truth beats request success</p>
             <div class="data-list" id="context-actions-list"></div>
+            <div class="mini-divider"></div>
+            <div class="data-list compact-data-list" id="service-health-list"></div>
           </div>
         </aside>
       </section>
@@ -141,19 +152,25 @@
 
     <dialog id="command-dialog" class="command-dialog">
       <form method="dialog" class="command-dialog-form">
-        <h3 id="command-dialog-title">Confirm action</h3>
-        <p id="command-dialog-body">Review the requested action.</p>
+        <h3 id="command-dialog-title">액션 확인</h3>
+        <p id="command-dialog-body">요청 내용을 검토하세요.</p>
+        <div class="command-dialog-grid">
+          <div><dt>Scope</dt><dd id="command-scope-text">account/main</dd></div>
+          <div><dt>예상 효과</dt><dd id="command-effect-text">선택된 효과가 없습니다.</dd></div>
+          <div><dt>잔여 리스크</dt><dd id="command-risk-text">선택된 리스크가 없습니다.</dd></div>
+          <div><dt>승인 경로</dt><dd id="command-approval-text">downstream observed 기준</dd></div>
+        </div>
         <label>
-          <span>Reason</span>
-          <input id="command-reason-input" type="text" placeholder="Required for high-risk actions">
+          <span>사유</span>
+          <input id="command-reason-input" type="text" placeholder="고위험 액션은 사유가 필수입니다">
         </label>
         <menu>
-          <button type="submit" value="cancel">Cancel</button>
-          <button type="submit" value="confirm" id="command-confirm-button">Submit</button>
+          <button type="submit" value="cancel">취소</button>
+          <button type="submit" value="confirm" id="command-confirm-button">제출</button>
         </menu>
       </form>
     </dialog>
 
-    <script src="./app.js?v=20260308a"></script>
+    <script src="./app.js?v=20260308c"></script>
   </body>
 </html>

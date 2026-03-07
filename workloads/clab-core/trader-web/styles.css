@@ -11,9 +11,18 @@
   --line-strong: rgba(165, 190, 211, 0.26);
   --accent: #8bb8ff;
   --accent-soft: rgba(139, 184, 255, 0.14);
-  --ok: #4dd3a7;
-  --warn: #ffbf66;
-  --danger: #ff7a5c;
+  --status-ok: #4dd3a7;
+  --status-info: #7db7ff;
+  --status-warn: #ffbf66;
+  --status-critical: #ff7a5c;
+  --status-muted: #7d8ea0;
+  --action-primary: rgba(139, 184, 255, 0.12);
+  --action-secondary: rgba(255, 255, 255, 0.05);
+  --action-caution: rgba(255, 191, 102, 0.1);
+  --action-danger: rgba(255, 122, 92, 0.1);
+  --pnl-positive: #59d4aa;
+  --pnl-negative: #ff8d72;
+  --pnl-flat: #9fb2c4;
   --shadow: 0 30px 80px rgba(0, 0, 0, 0.38);
 }
 
@@ -278,7 +287,7 @@ h3 {
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: var(--ok);
+  background: var(--status-ok);
   box-shadow: 0 0 16px rgba(77, 211, 167, 0.8);
 }
 
@@ -424,11 +433,11 @@ h3 {
 }
 
 .service-card.ready::before {
-  background: var(--ok);
+  background: var(--status-ok);
 }
 
 .service-card.degraded::before {
-  background: var(--warn);
+  background: var(--status-warn);
 }
 
 .service-name {
@@ -607,19 +616,19 @@ h3 {
 }
 
 .proposal-actions button:first-child {
-  color: var(--ok);
+  color: var(--status-ok);
   border-color: rgba(77, 211, 167, 0.28);
   background: rgba(77, 211, 167, 0.1);
 }
 
 .proposal-actions button:nth-child(2) {
-  color: var(--warn);
+  color: var(--status-warn);
   border-color: rgba(255, 191, 102, 0.3);
   background: rgba(255, 191, 102, 0.08);
 }
 
 .proposal-actions button:last-child {
-  color: var(--danger);
+  color: var(--status-critical);
   border-color: rgba(255, 122, 92, 0.28);
   background: rgba(255, 122, 92, 0.08);
 }
@@ -712,7 +721,7 @@ h3 {
 
 .guardrail-index {
   display: inline-flex;
-  color: var(--warn);
+  color: var(--status-warn);
   font-size: 0.78rem;
 }
 
@@ -742,21 +751,33 @@ h3 {
 }
 
 .is-ready {
-  color: var(--ok);
+  color: var(--status-ok);
   background: rgba(77, 211, 167, 0.12);
   border-color: rgba(77, 211, 167, 0.3);
 }
 
+.is-info {
+  color: var(--status-info);
+  background: rgba(125, 183, 255, 0.12);
+  border-color: rgba(125, 183, 255, 0.3);
+}
+
 .is-degraded {
-  color: var(--warn);
+  color: var(--status-warn);
   background: rgba(255, 191, 102, 0.12);
   border-color: rgba(255, 191, 102, 0.3);
 }
 
 .is-blocked {
-  color: var(--danger);
+  color: var(--status-critical);
   background: rgba(255, 122, 92, 0.12);
   border-color: rgba(255, 122, 92, 0.28);
+}
+
+.is-muted {
+  color: var(--status-muted);
+  background: rgba(125, 142, 160, 0.1);
+  border-color: rgba(125, 142, 160, 0.22);
 }
 
 @media (max-width: 1180px) {
@@ -902,6 +923,16 @@ h3 {
   color: var(--muted);
 }
 
+.widget-meta {
+  margin-top: 10px;
+  color: var(--muted);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  line-height: 1.6;
+  text-transform: uppercase;
+}
+
 .control-grid {
   display: grid;
   grid-template-columns: minmax(260px, 0.22fr) minmax(460px, 0.5fr) minmax(300px, 0.28fr);
@@ -935,15 +966,21 @@ h3 {
   min-height: 44px;
   border: 1px solid var(--line-strong);
   border-radius: 14px;
-  background: rgba(139, 184, 255, 0.08);
+  background: var(--action-primary);
   color: var(--muted-strong);
   font: inherit;
   cursor: pointer;
 }
 
+.command-button.caution {
+  border-color: rgba(255, 191, 102, 0.3);
+  background: var(--action-caution);
+  color: #ffd493;
+}
+
 .command-button.danger {
   border-color: rgba(255, 122, 92, 0.3);
-  background: rgba(255, 122, 92, 0.08);
+  background: var(--action-danger);
 }
 
 .command-button:disabled {
@@ -1035,6 +1072,16 @@ h3 {
   line-height: 1.6;
 }
 
+.mini-divider {
+  height: 1px;
+  margin: 16px 0;
+  background: var(--line);
+}
+
+.compact-data-list {
+  margin-top: 0;
+}
+
 .table-wrap {
   margin-top: 16px;
   overflow: auto;
@@ -1104,6 +1151,10 @@ h3 {
   color: var(--muted-strong);
 }
 
+.action-badge {
+  border-color: rgba(139, 184, 255, 0.18);
+}
+
 .command-dialog {
   width: min(92vw, 520px);
   border: 1px solid var(--line-strong);
@@ -1120,6 +1171,40 @@ h3 {
   display: grid;
   gap: 14px;
   padding: 22px;
+}
+
+.command-dialog-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.command-dialog-grid div {
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.command-dialog-grid div:nth-child(-n + 2) {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.command-dialog-grid dt {
+  color: var(--muted);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.command-dialog-grid dd {
+  margin: 8px 0 0;
+  color: var(--muted-strong);
+  line-height: 1.5;
 }
 
 .command-dialog-form label {
@@ -1155,12 +1240,50 @@ h3 {
   font: inherit;
 }
 
+.dialog-caution {
+  border-color: rgba(255, 191, 102, 0.32);
+  background: var(--action-caution);
+  color: #ffd493;
+}
+
+.dialog-danger {
+  border-color: rgba(255, 122, 92, 0.32);
+  background: var(--action-danger);
+  color: #ffc0b0;
+}
+
+.verify-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 18px;
+  margin-top: 14px;
+  border: 1px solid rgba(139, 184, 255, 0.3);
+  border-radius: 999px;
+  background: rgba(139, 184, 255, 0.08);
+  color: var(--accent);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.78rem;
+  text-decoration: none;
+  letter-spacing: 0.04em;
+}
+
+.verify-nav-link:hover {
+  background: rgba(139, 184, 255, 0.14);
+  border-color: rgba(139, 184, 255, 0.5);
+}
+
 @media (max-width: 1180px) {
   .control-grid {
     grid-template-columns: 1fr;
   }
 
   .dual-detail {
+    grid-template-columns: 1fr;
+  }
+
+  .command-dialog-grid {
     grid-template-columns: 1fr;
   }
 }

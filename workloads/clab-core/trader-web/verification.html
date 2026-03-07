@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CLAB Trade - 검증 대시보드</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css?v=20260308b">
+    <link rel="stylesheet" href="./verification.css?v=20260308b">
+  </head>
+  <body>
+    <div class="backdrop"></div>
+    <div class="noise"></div>
+    <main class="shell control-shell">
+      <header class="topbar panel">
+        <div>
+          <p class="eyebrow">trade.clab.one</p>
+          <div class="brand-row">
+            <h1>CLAB Trade</h1>
+            <span class="badge static-badge">검증 대시보드</span>
+          </div>
+          <p class="lead compact-lead">읽기 전용 검증 화면입니다. 모든 값은 source timestamp와 freshness를 함께 표시합니다. 값이 없으면 0이 아니라 알 수 없음으로 표시합니다.</p>
+          <a href="./index.html" class="nav-back-link">&larr; 제어 콘솔</a>
+        </div>
+        <div class="topbar-meta">
+          <div class="meta-chip"><span class="meta-label">environment</span><strong id="env-chip">staging</strong></div>
+          <div class="meta-chip"><span class="meta-label">venue</span><strong id="venue-chip">binance</strong></div>
+          <div class="meta-chip"><span class="meta-label">account</span><strong id="account-chip">main</strong></div>
+          <div class="meta-chip pulse-chip"><span class="pulse-dot" id="global-pulse"></span><span id="poll-state">연결 중</span></div>
+        </div>
+      </header>
+
+      <!-- Global Health Bar -->
+      <section class="health-bar panel" id="health-bar">
+        <div class="health-bar-row">
+          <div class="health-item">
+            <span class="health-label">ENV</span>
+            <span class="health-value" id="hb-env">staging</span>
+          </div>
+          <div class="health-item">
+            <span class="health-label">VENUE</span>
+            <span class="health-value" id="hb-venue">binance</span>
+          </div>
+          <div class="health-item">
+            <span class="health-label">ACCOUNT</span>
+            <span class="health-value" id="hb-account">main</span>
+          </div>
+          <div class="health-item">
+            <span class="health-label">FRESHNESS</span>
+            <span class="data-state-dot unknown" id="hb-freshness-dot"></span>
+            <span class="health-value" id="hb-freshness">&mdash;ms</span>
+          </div>
+          <div class="health-item">
+            <span class="health-label">MARKET DATA</span>
+            <span class="data-state-dot unknown" id="hb-market-dot"></span>
+            <span class="health-value" id="hb-market">unknown</span>
+          </div>
+          <div class="health-item">
+            <span class="health-label">KILL SWITCH</span>
+            <span class="data-state-dot unknown" id="hb-kill-dot"></span>
+            <span class="health-value" id="hb-kill">unknown</span>
+          </div>
+          <div class="health-item">
+            <span class="health-label">RECON LAG</span>
+            <span class="data-state-dot unknown" id="hb-recon-dot"></span>
+            <span class="health-value" id="hb-recon-lag">&mdash;ms</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Summary Cards -->
+      <section class="summary-cards" id="summary-cards">
+        <div class="summary-card">
+          <span class="summary-card-label">총 자산</span>
+          <strong class="summary-card-value unknown-value" id="sc-equity">&mdash;</strong>
+          <span class="summary-card-freshness" id="sc-equity-fresh"></span>
+          <a href="#" class="grafana-link" title="Grafana에서 열기" onclick="return false;">Grafana</a>
+        </div>
+        <div class="summary-card">
+          <span class="summary-card-label">사용 가능 잔고</span>
+          <strong class="summary-card-value unknown-value" id="sc-balance">&mdash;</strong>
+          <span class="summary-card-freshness" id="sc-balance-fresh"></span>
+          <a href="#" class="grafana-link" title="Grafana에서 열기" onclick="return false;">Grafana</a>
+        </div>
+        <div class="summary-card">
+          <span class="summary-card-label">사용 중 마진</span>
+          <strong class="summary-card-value unknown-value" id="sc-margin">&mdash;</strong>
+          <span class="summary-card-freshness" id="sc-margin-fresh"></span>
+          <a href="#" class="grafana-link" title="Grafana에서 열기" onclick="return false;">Grafana</a>
+        </div>
+        <div class="summary-card">
+          <span class="summary-card-label">오픈 주문 / 활성 포지션</span>
+          <strong class="summary-card-value unknown-value" id="sc-orders-positions">&mdash; / &mdash;</strong>
+          <span class="summary-card-freshness" id="sc-orders-fresh"></span>
+          <a href="#" class="grafana-link" title="Grafana에서 열기" onclick="return false;">Grafana</a>
+        </div>
+      </section>
+
+      <!-- Main Content: Two Columns -->
+      <section class="verify-grid">
+        <!-- Left Column: Order Blotter -->
+        <div class="verify-col verify-col-left panel">
+          <div class="rail-section">
+            <div class="panel-header">
+              <div>
+                <p class="section-kicker">주문 blotter</p>
+                <h3>검증 주문</h3>
+              </div>
+              <span class="badge section-badge" id="blotter-badge">0 rows</span>
+            </div>
+            <div class="blotter-filters">
+              <select id="blotter-status-filter" class="blotter-filter-select">
+                <option value="">전체 상태</option>
+                <option value="Accepted">Accepted</option>
+                <option value="PartiallyFilled">PartiallyFilled</option>
+                <option value="Rejected">Rejected</option>
+                <option value="PendingVerification">PendingVerification</option>
+                <option value="Filled">Filled</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+              <input id="blotter-symbol-filter" type="text" class="blotter-filter-input" placeholder="심볼 필터">
+            </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>상태</th>
+                    <th>Symbol</th>
+                    <th>방향</th>
+                    <th>Qty</th>
+                    <th>가격</th>
+                    <th>전략</th>
+                    <th>갱신 시각</th>
+                  </tr>
+                </thead>
+                <tbody id="blotter-body">
+                  <tr><td colspan="7" class="empty-state">첫 snapshot을 기다리는 중입니다...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Selected Order Detail -->
+        <div class="verify-col verify-col-right panel">
+          <div class="rail-section">
+            <div class="panel-header">
+              <div>
+                <p class="section-kicker">선택된 주문</p>
+                <h3>주문 상세</h3>
+              </div>
+              <span class="badge section-badge" id="detail-badge">선택 없음</span>
+            </div>
+            <p class="detail-correlation" id="detail-correlation"></p>
+            <div class="truth-tabs" id="truth-tabs">
+              <button class="truth-tab is-active" type="button" data-tab="lifecycle">Lifecycle</button>
+              <button class="truth-tab" type="button" data-tab="execution">Execution Truth</button>
+              <button class="truth-tab" type="button" data-tab="portfolio">Portfolio Truth</button>
+              <button class="truth-tab" type="button" data-tab="reconciliation">Reconciliation</button>
+            </div>
+            <div class="truth-panel" id="truth-panel-lifecycle">
+              <p class="truth-placeholder">주문을 선택하면 lifecycle 상세를 볼 수 있습니다.</p>
+            </div>
+            <div class="truth-panel" id="truth-panel-execution" style="display:none;">
+              <p class="truth-placeholder">표시할 데이터가 없습니다.</p>
+            </div>
+            <div class="truth-panel" id="truth-panel-portfolio" style="display:none;">
+              <p class="truth-placeholder">표시할 데이터가 없습니다.</p>
+            </div>
+            <div class="truth-panel" id="truth-panel-reconciliation" style="display:none;">
+              <p class="truth-placeholder">표시할 데이터가 없습니다.</p>
+            </div>
+            <div class="detail-console-link">
+              <a href="./index.html" class="console-link">제어 콘솔에서 열기 &rarr;</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Bottom Panel (Tabs) -->
+      <section class="bottom-panel panel" id="bottom-panel">
+        <div class="bottom-tabs" id="bottom-tabs">
+          <button class="bottom-tab is-active" type="button" data-btab="positions">포지션 &amp; 리스크</button>
+          <button class="bottom-tab" type="button" data-btab="reconciliation">Reconciliation</button>
+          <button class="bottom-tab" type="button" data-btab="fills">체결</button>
+          <button class="bottom-tab" type="button" data-btab="pnl">PnL</button>
+          <button class="bottom-tab" type="button" data-btab="actions">운영자 액션</button>
+          <button class="bottom-tab" type="button" data-btab="incidents">인시던트</button>
+        </div>
+
+        <!-- Positions & Risk -->
+        <div class="bottom-content" id="btab-positions">
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Symbol</th>
+                  <th>Qty</th>
+                  <th>진입가</th>
+                  <th>마크가</th>
+                  <th>미실현 PnL</th>
+                  <th>레버리지</th>
+                </tr>
+              </thead>
+              <tbody id="positions-body">
+                <tr><td colspan="6" class="empty-state">첫 snapshot을 기다리는 중입니다...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Reconciliation -->
+        <div class="bottom-content" id="btab-reconciliation" style="display:none;">
+          <div class="drift-summary" id="drift-summary">
+            <span class="drift-badge drift-no-drift">no_drift</span>
+            <span class="drift-badge drift-explainable">explainable</span>
+            <span class="drift-badge drift-actionable">actionable</span>
+            <span class="drift-badge drift-critical">critical</span>
+          </div>
+          <div class="recon-mismatch-list" id="recon-mismatch-list">
+            <p class="truth-placeholder">표시할 reconciliation 데이터가 없습니다.</p>
+          </div>
+        </div>
+
+        <!-- Fills -->
+        <div class="bottom-content" id="btab-fills" style="display:none;">
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>시각</th>
+                  <th>Symbol</th>
+                  <th>방향</th>
+                  <th>Qty</th>
+                  <th>가격</th>
+                  <th>주문 ID</th>
+                </tr>
+              </thead>
+              <tbody id="fills-body">
+                <tr><td colspan="6" class="empty-state">첫 snapshot을 기다리는 중입니다...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- PnL -->
+        <div class="bottom-content" id="btab-pnl" style="display:none;">
+          <div class="pnl-summary">
+            <div class="pnl-card">
+              <span class="pnl-label">실현 PnL</span>
+              <strong class="pnl-value unknown-value" id="pnl-realized">&mdash;</strong>
+            </div>
+            <div class="pnl-card">
+              <span class="pnl-label">미실현 PnL</span>
+              <strong class="pnl-value unknown-value" id="pnl-unrealized">&mdash;</strong>
+            </div>
+            <div class="pnl-card">
+              <span class="pnl-label">총 PnL</span>
+              <strong class="pnl-value unknown-value" id="pnl-total">&mdash;</strong>
+            </div>
+          </div>
+            <div id="pnl-breakdown"></div>
+        </div>
+
+        <!-- Operator Actions -->
+        <div class="bottom-content" id="btab-actions" style="display:none;">
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>시각</th>
+                  <th>액션</th>
+                  <th>주체</th>
+                  <th>사유</th>
+                  <th>Observed</th>
+                </tr>
+              </thead>
+              <tbody id="actions-body">
+                <tr><td colspan="5" class="empty-state">최근 운영자 액션이 없습니다.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Incidents -->
+        <div class="bottom-content" id="btab-incidents" style="display:none;">
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Severity</th>
+                  <th>유형</th>
+                  <th>제목</th>
+                  <th>상태</th>
+                  <th>감지 시각</th>
+                </tr>
+              </thead>
+              <tbody id="incidents-body">
+                <tr><td colspan="5" class="empty-state">활성 인시던트가 없습니다.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer class="verify-footer">
+        <p>데이터는 자동으로 갱신됩니다. 모든 값은 source timestamp를 함께 표시합니다.</p>
+        <p class="footer-correlation" id="footer-correlation">correlation_id: &mdash;</p>
+      </footer>
+    </main>
+
+    <script src="./verification.js?v=20260308b"></script>
+  </body>
+</html>

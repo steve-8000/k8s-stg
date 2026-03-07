@@ -42,13 +42,27 @@ spec:
             - name: AUTH_SERVICE_STEP_UP_TOKEN_TTL
               value: 5m
             - name: AUTH_SERVICE_BOOTSTRAP_USERNAME
-              value: operator
+              value: steve
             - name: AUTH_SERVICE_BOOTSTRAP_PASSWORD
-              value: operator-pass
+              value: "$2a$12$Kv3k7Y2t5zBw23QksNuY0.xegtkvQPW04JbJZX3/568k5c6Yxh8Dm"
             - name: AUTH_SERVICE_BOOTSTRAP_ROLE
               value: operator
             - name: AUTH_SERVICE_BOOTSTRAP_PERMISSIONS
               value: strategy.start,strategy.stop,audit.read,proposal.review,trading.kill_switch,trading.cancel_all,trading.flatten_positions
+            - name: AUTH_SERVICE_GOOGLE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: auth-google-secret
+                  key: AUTH_SERVICE_GOOGLE_CLIENT_ID
+            - name: AUTH_SERVICE_GOOGLE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: auth-google-secret
+                  key: AUTH_SERVICE_GOOGLE_CLIENT_SECRET
+            - name: AUTH_SERVICE_GOOGLE_REDIRECT_URI
+              value: "https://trade.clab.one"
+            - name: AUTH_SERVICE_ALLOWED_EMAILS
+              value: "stv.z8k@gmail.com"
           ports:
             - name: http
               containerPort: 8091
