@@ -132,7 +132,7 @@ const VerificationDashboard = {
   // ── Polling ──
   async poll() {
     this.state.dataState = 'loading';
-    this.elements.pollState.textContent = '갱신 중';
+    this.elements.pollState.textContent = 'Refreshing';
 
     const results = await Promise.all([
       this.fetchJSON('/verification/live/overview'),
@@ -301,12 +301,12 @@ const VerificationDashboard = {
     }
 
     if (this.state.dataState === 'unknown' && this.state.orders.length === 0) {
-      this.elements.blotterBody.innerHTML = '<tr><td colspan="7" class="empty-state">첫 snapshot을 기다리는 중입니다...</td></tr>';
+      this.elements.blotterBody.innerHTML = '<tr><td colspan="7" class="empty-state">Waiting for first snapshot...</td></tr>';
       return;
     }
 
     if (orders.length === 0) {
-      this.elements.blotterBody.innerHTML = '<tr><td colspan="7" class="empty-state">필터와 일치하는 주문이 없습니다.</td></tr>';
+      this.elements.blotterBody.innerHTML = '<tr><td colspan="7" class="empty-state">No orders match the current filters.</td></tr>';
       return;
     }
 
@@ -346,12 +346,12 @@ const VerificationDashboard = {
       : this.state.selectedOrder;
 
     if (!order) {
-      this.elements.detailBadge.textContent = '선택 없음';
+      this.elements.detailBadge.textContent = 'none selected';
       this.elements.detailCorrelation.textContent = '';
       this.elements.truthPanelLifecycle.innerHTML = '<p class="truth-placeholder">Select an order to view lifecycle details.</p>';
-      this.elements.truthPanelExecution.innerHTML = '<p class="truth-placeholder">표시할 데이터가 없습니다.</p>';
-      this.elements.truthPanelPortfolio.innerHTML = '<p class="truth-placeholder">표시할 데이터가 없습니다.</p>';
-      this.elements.truthPanelReconciliation.innerHTML = '<p class="truth-placeholder">표시할 데이터가 없습니다.</p>';
+      this.elements.truthPanelExecution.innerHTML = '<p class="truth-placeholder">No data to display.</p>';
+      this.elements.truthPanelPortfolio.innerHTML = '<p class="truth-placeholder">No data to display.</p>';
+      this.elements.truthPanelReconciliation.innerHTML = '<p class="truth-placeholder">No data to display.</p>';
       return;
     }
 
@@ -389,30 +389,30 @@ const VerificationDashboard = {
           this.truthRow('Filled Qty', this.formatValue(order.filled_qty)),
           this.truthRow('Avg Fill Price', this.formatValue(order.avg_fill_price)),
         ].join('')
-      : '<p class="truth-placeholder">표시할 execution truth 데이터가 없습니다.</p>';
+      : '<p class="truth-placeholder">No execution-truth data available.</p>';
     this.elements.truthPanelExecution.innerHTML = execHtml;
 
     // Portfolio truth tab
     const fills = order.fills || [];
     const portfolioHtml = fills.length > 0
       ? fills.map((f, i) => this.truthRow(`Fill #${i + 1}`, `${this.formatValue(f.qty)} @ ${this.formatValue(f.price)}`)).join('')
-      : '<p class="truth-placeholder">연결된 portfolio truth 데이터가 아직 없습니다.</p>';
+      : '<p class="truth-placeholder">No linked portfolio-truth data yet.</p>';
     this.elements.truthPanelPortfolio.innerHTML = portfolioHtml;
 
     // Reconciliation tab
-    const reconState = order.pending_state === 'ReconciliationRequired' ? 'Reconciliation 필요' : '명시적 reconciliation hold 없음';
+    const reconState = order.pending_state === 'ReconciliationRequired' ? 'Reconciliation required' : 'No explicit reconciliation hold';
     this.elements.truthPanelReconciliation.innerHTML = this.truthRow('Reconciliation', reconState);
   },
 
   // ── Positions ──
   renderPositions() {
     if (this.state.dataState === 'unknown' && this.state.positions.length === 0) {
-      this.elements.positionsBody.innerHTML = '<tr><td colspan="6" class="empty-state">첫 snapshot을 기다리는 중입니다...</td></tr>';
+      this.elements.positionsBody.innerHTML = '<tr><td colspan="6" class="empty-state">Waiting for first snapshot...</td></tr>';
       return;
     }
 
     if (this.state.positions.length === 0) {
-      this.elements.positionsBody.innerHTML = '<tr><td colspan="6" class="empty-state">오픈 포지션이 없습니다.</td></tr>';
+      this.elements.positionsBody.innerHTML = '<tr><td colspan="6" class="empty-state">No open positions.</td></tr>';
       return;
     }
 
@@ -442,14 +442,14 @@ const VerificationDashboard = {
     ].join('');
 
     if (mismatches.length === 0) {
-      this.elements.reconMismatchList.innerHTML = '<p class="truth-placeholder">감지된 reconciliation mismatch가 없습니다.</p>';
+      this.elements.reconMismatchList.innerHTML = '<p class="truth-placeholder">No reconciliation mismatches detected.</p>';
       return;
     }
 
     this.elements.reconMismatchList.innerHTML = mismatches.slice(0, 20).map((m) => `
       <div class="recon-mismatch-item">
         <strong>${this.escapeHtml(m.symbol || m.field || 'Mismatch')}</strong>
-        <span>${this.escapeHtml(m.description || m.message || 'drift 감지')}</span>
+        <span>${this.escapeHtml(m.description || m.message || 'Drift detected')}</span>
         <span class="drift-badge drift-${(m.drift_class || 'unknown').replace(/\s+/g, '-')}">${this.escapeHtml(m.drift_class || 'unknown')}</span>
       </div>
     `).join('');
@@ -458,12 +458,12 @@ const VerificationDashboard = {
   // ── Fills ──
   renderFills() {
     if (this.state.dataState === 'unknown' && this.state.fills.length === 0) {
-      this.elements.fillsBody.innerHTML = '<tr><td colspan="6" class="empty-state">첫 snapshot을 기다리는 중입니다...</td></tr>';
+      this.elements.fillsBody.innerHTML = '<tr><td colspan="6" class="empty-state">Waiting for first snapshot...</td></tr>';
       return;
     }
 
     if (this.state.fills.length === 0) {
-      this.elements.fillsBody.innerHTML = '<tr><td colspan="6" class="empty-state">최근 체결이 없습니다.</td></tr>';
+      this.elements.fillsBody.innerHTML = '<tr><td colspan="6" class="empty-state">No recent fills.</td></tr>';
       return;
     }
 
@@ -492,7 +492,7 @@ const VerificationDashboard = {
     const positions = Array.isArray(pnl.positions) ? pnl.positions : [];
     const breakdownEl = document.getElementById('pnl-breakdown');
     if (breakdownEl && positions.length > 0) {
-      breakdownEl.innerHTML = '<h4 class="pnl-breakdown-title">포지션별 Attribution</h4>' +
+      breakdownEl.innerHTML = '<h4 class="pnl-breakdown-title">Position attribution</h4>' +
         '<table class="data-table"><thead><tr><th>Symbol</th><th>Qty</th><th>Entry</th><th>Mark</th><th>Unrealized</th><th>Realized</th></tr></thead><tbody>' +
         positions.map((p) => `<tr>
           <td>${this.escapeHtml(p.symbol || '\u2014')}</td>
@@ -525,7 +525,7 @@ const VerificationDashboard = {
     const actions = Array.isArray(cs?.data) ? cs.data : (Array.isArray(cs?.recent_actions) ? cs.recent_actions : []);
 
     if (actions.length === 0) {
-      this.elements.actionsBody.innerHTML = '<tr><td colspan="5" class="empty-state">최근 운영자 액션이 없습니다.</td></tr>';
+      this.elements.actionsBody.innerHTML = '<tr><td colspan="5" class="empty-state">No recent operator actions.</td></tr>';
       return;
     }
 
@@ -541,7 +541,7 @@ const VerificationDashboard = {
   // ── Incidents ──
   renderIncidents() {
     if (this.state.incidents.length === 0) {
-      this.elements.incidentsBody.innerHTML = '<tr><td colspan="5" class="empty-state">활성 인시던트가 없습니다.</td></tr>';
+      this.elements.incidentsBody.innerHTML = '<tr><td colspan="5" class="empty-state">No active incidents.</td></tr>';
       return;
     }
 
