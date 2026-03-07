@@ -1,0 +1,33 @@
+##
+## Root Application — Bootstrap 전용
+## 최초 1회만 수동 적용: kubectl apply -f bootstrap/root.yaml
+## 이후 ArgoCD가 자기 자신을 포함한 모든 리소스를 관리
+##
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/steve-8000/k8s-stg.git
+    targetRevision: main
+    path: argocd-config
+    directory:
+      recurse: false
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false
+    retry:
+      limit: 10
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m

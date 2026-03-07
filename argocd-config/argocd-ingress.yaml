@@ -1,22 +1,28 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: nginx
+  name: argocd-ingress
   namespace: argocd
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
 spec:
-  project: default
+  project: platform
   source:
     repoURL: https://github.com/steve-8000/k8s-stg.git
     targetRevision: main
-    path: base/nginx
+    path: platform/argocd-ingress
   destination:
     server: https://kubernetes.default.svc
-    namespace: nginx
+    namespace: argocd
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
-      - CreateNamespace=true
+      - SkipDryRunOnMissingResource=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m

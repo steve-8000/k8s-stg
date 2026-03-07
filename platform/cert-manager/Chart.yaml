@@ -1,0 +1,9 @@
+apiVersion: v2
+name: cert-manager
+description: Certificate Manager — pinned version, managed by ArgoCD
+version: 1.0.0
+type: application
+dependencies:
+  - name: cert-manager
+    version: v1.19.4
+    repository: https://charts.jetstack.io

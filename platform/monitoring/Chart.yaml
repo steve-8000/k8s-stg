@@ -1,0 +1,9 @@
+apiVersion: v2
+name: monitoring
+description: Prometheus + Grafana + Node Exporter — pinned version, managed by ArgoCD
+version: 1.0.0
+type: application
+dependencies:
+  - name: kube-prometheus-stack
+    version: 82.10.1
+    repository: https://prometheus-community.github.io/helm-charts

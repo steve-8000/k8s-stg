@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: workloads
+  namespace: argocd
+spec:
+  description: Application workloads — deployed by dev/ops teams
+  sourceRepos:
+    - https://github.com/steve-8000/k8s-stg.git
+  destinations:
+    - namespace: "*"
+      server: https://kubernetes.default.svc
+  namespaceResourceBlacklist:
+    - group: ""
+      kind: ResourceQuota
+    - group: ""
+      kind: LimitRange
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+  orphanedResources:
+    warn: true
