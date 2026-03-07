@@ -50,3 +50,6 @@ configMapGenerator:
       - trader-web/index.html
       - trader-web/app.js
       - trader-web/styles.css
+      - trader-web/verification.html
+      - trader-web/verification.js
+      - trader-web/verification.css

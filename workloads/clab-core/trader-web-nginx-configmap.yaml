@@ -29,7 +29,19 @@ data:
       location = /app.js {
         try_files /app.js =404;
       }
-    
+
+      location = /verification.html {
+        try_files /verification.html =404;
+      }
+
+      location = /verification.js {
+        try_files /verification.js =404;
+      }
+
+      location = /verification.css {
+        try_files /verification.css =404;
+      }
+
       location = /favicon.ico {
         access_log off;
         return 204;
