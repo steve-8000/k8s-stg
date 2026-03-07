@@ -18,6 +18,7 @@ resources:
   - portfolio-canonical-state-deployment.yaml
   - positions-ledger-service.yaml
   - positions-ledger-deployment.yaml
+  - promotion-gate-policy-configmap.yaml
   - promotion-gate-service.yaml
   - promotion-gate-deployment.yaml
   - research-labs-service.yaml

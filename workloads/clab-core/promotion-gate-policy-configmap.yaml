@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: promotion-gate-policy
+  namespace: clab-core
+data:
+  promotion_policy_v1.json: |
+    {
+      "research_to_engine": {
+        "net_oos_expectancy_bps_per_trade": "> 0",
+        "net_oos_sharpe": ">= 1.00",
+        "max_drawdown_pct": "<= 20",
+        "walk_forward_pass_rate": ">= 0.60",
+        "parameter_stability": ">= 0.60",
+        "regime_pass_rate": ">= 0.70",
+        "pbo": "<= 0.30",
+        "dsr": ">= 0.60",
+        "min_closed_trades": 150
+      },
+      "engine_to_paper": {
+        "net_oos_sharpe": ">= 1.25",
+        "calmar": ">= 0.80",
+        "psr_sr_gt_zero": ">= 0.95",
+        "dsr": ">= 0.80",
+        "pbo": "<= 0.20",
+        "promotion_score": ">= 80"
+      },
+      "paper_to_canary": {
+        "min_calendar_days": 21,
+        "min_closed_trades": 200,
+        "paper_net_expectancy": "> 0",
+        "order_reject_rate": "< 0.01",
+        "critical_recon_mismatch": 0,
+        "p1_incident_count": 0
+      },
+      "canary_to_full_live": {
+        "min_calendar_days": 30,
+        "min_closed_trades": 300,
+        "live_expectancy_retention": ">= 0.60",
+        "live_slippage_vs_paper_ratio": "<= 1.25",
+        "order_reject_rate": "< 0.005",
+        "critical_recon_mismatch": 0,
+        "forced_flatten_count": 0
+      }
+    }

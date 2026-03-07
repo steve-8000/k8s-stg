@@ -30,9 +30,15 @@ spec:
               value: postgres://postgres:postgres@postgres.clab-data.svc.cluster.local:5432/clab_trade?sslmode=disable
             - name: PROMOTION_GATE_NATS_URL
               value: nats://nats.clab-system.svc.cluster.local:4222
+            - name: PROMOTION_GATE_POLICY_PATH
+              value: /etc/clab/promotion/promotion_policy_v1.json
           ports:
             - name: http
               containerPort: 8093
+          volumeMounts:
+            - name: promotion-gate-policy
+              mountPath: /etc/clab/promotion
+              readOnly: true
           readinessProbe:
             httpGet:
               path: /readyz
@@ -50,3 +56,7 @@ spec:
               memory: 512Mi
           securityContext:
             allowPrivilegeEscalation: false
+      volumes:
+        - name: promotion-gate-policy
+          configMap:
+            name: promotion-gate-policy
