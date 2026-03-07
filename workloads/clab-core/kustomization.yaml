@@ -8,3 +8,4 @@ resources:
   - market-data-deployment.yaml
   - strategy-engine-service.yaml
   - strategy-engine-deployment.yaml
+  - trade-ingress.yaml
