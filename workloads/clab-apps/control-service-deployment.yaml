@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: control-service
+  namespace: clab-apps
+  labels:
+    app.kubernetes.io/name: control-service
+    app.kubernetes.io/instance: control-service-stg
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: control-service
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: control-service
+        app.kubernetes.io/instance: control-service-stg
+    spec:
+      containers:
+        - name: control-service
+          image: clab-trade/control-service:v0.1.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: CLAB_ENV
+              value: staging
+            - name: CLAB_VENUE
+              value: binance
+            - name: CONTROL_SERVICE_HTTP_ADDR
+              value: :8095
+            - name: CONTROL_SERVICE_POSITIONS_LEDGER_URL
+              value: http://positions-ledger.clab-core.svc.cluster.local
+            - name: CONTROL_SERVICE_EXECUTION_ROUTER_URL
+              value: http://execution-router.clab-core.svc.cluster.local
+          ports:
+            - name: http
+              containerPort: 8095
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
