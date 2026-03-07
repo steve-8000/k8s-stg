@@ -7,7 +7,7 @@ spec:
   description: Application workloads — deployed by dev/ops teams
   sourceRepos:
     - https://github.com/steve-8000/k8s-stg.git
-    - https://github.com/steve-8000/clab-trade.git
+    - git@github.com:steve-8000/clab-trade.git
   destinations:
     - namespace: "*"
       server: https://kubernetes.default.svc

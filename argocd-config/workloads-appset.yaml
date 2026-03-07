@@ -11,7 +11,7 @@ spec:
     - missingkey=error
   generators:
     - git:
-        repoURL: https://github.com/steve-8000/clab-trade.git
+        repoURL: git@github.com:steve-8000/clab-trade.git
         revision: main
         directories:
           - path: k8s-deploy/*
@@ -25,7 +25,7 @@ spec:
     spec:
       project: workloads
       source:
-        repoURL: https://github.com/steve-8000/clab-trade.git
+        repoURL: git@github.com:steve-8000/clab-trade.git
         targetRevision: main
         path: "{{ .path.path }}"
       destination:
