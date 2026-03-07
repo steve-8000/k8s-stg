@@ -10,70 +10,316 @@ data:
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>CLAB Trade</title>
+        <title>CLAB Trade Operations Console</title>
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="./styles.css">
       </head>
       <body>
         <div class="backdrop"></div>
+        <div class="noise"></div>
         <main class="shell">
-          <section class="hero">
-            <p class="eyebrow">trade.clab.one</p>
-            <h1>CLAB Trade Control Surface</h1>
-            <p class="lead">
-              Live market ingestion, feature construction, and signal generation are online.
-              Execution remains intentionally blocked until rotated Binance credentials are injected safely.
-            </p>
-            <div class="hero-meta">
-              <span id="timestamp">checking</span>
-              <span class="dot"></span>
-              <span>staging / binance</span>
+          <header class="topbar panel">
+            <div>
+              <p class="eyebrow">trade.clab.one</p>
+              <div class="brand-row">
+                <h1>CLAB Trade</h1>
+                <span class="badge static-badge">internal ops console</span>
+              </div>
+            </div>
+            <div class="topbar-meta">
+              <div class="meta-chip">
+                <span class="meta-label">environment</span>
+                <strong>staging</strong>
+              </div>
+              <div class="meta-chip">
+                <span class="meta-label">venue</span>
+                <strong>binance futures</strong>
+              </div>
+              <div class="meta-chip pulse-chip">
+                <span class="pulse-dot"></span>
+                <span id="poll-state">polling readiness</span>
+              </div>
+            </div>
+          </header>
+
+          <section class="hero panel">
+            <div class="hero-copy">
+              <p class="section-kicker">Operational overview</p>
+              <h2>Trading operations remain observable while execution stays intentionally blocked.</h2>
+              <p class="lead">
+                This console tracks public edge readiness for market data, feature computation, and strategy services,
+                then lays out the operational surfaces the desk will use once portfolio, proposal, and execution adapters
+                are connected. Missing systems are shown plainly instead of simulated.
+              </p>
+            </div>
+            <div class="hero-aside">
+              <div class="hero-summary">
+                <span class="section-kicker">Platform posture</span>
+                <strong id="platform-status">Polling services</strong>
+                <p id="platform-summary">Waiting for readiness checks from the public edge.</p>
+              </div>
+              <div class="metric-grid">
+                <div class="metric-card">
+                  <span class="metric-label">last poll</span>
+                  <strong id="timestamp">checking</strong>
+                </div>
+                <div class="metric-card">
+                  <span class="metric-label">services ready</span>
+                  <strong id="healthy-count">0 / 3</strong>
+                </div>
+                <div class="metric-card">
+                  <span class="metric-label">degraded</span>
+                  <strong id="degraded-count">3</strong>
+                </div>
+                <div class="metric-card caution-card">
+                  <span class="metric-label">execution state</span>
+                  <strong>blocked by guardrail</strong>
+                </div>
+              </div>
             </div>
           </section>
-          <section class="grid">
-            <article class="card emphasis">
-              <div class="card-header">
-                <span>Deployment state</span>
-                <span class="badge ok">healthy</span>
+
+          <section class="dashboard-grid">
+            <article class="panel panel-span-8">
+              <div class="panel-header">
+                <div>
+                  <p class="section-kicker">Service health</p>
+                  <h3>Public readiness matrix</h3>
+                </div>
+                <span class="badge section-badge">edge checks</span>
               </div>
-              <h2>Pipeline active</h2>
-              <p>
-                `market-data -> feature-pipeline -> strategy-engine` is streaming in-cluster over JetStream.
+              <div class="service-grid">
+                <section class="service-card" id="market-data-card">
+                  <div class="service-head">
+                    <div>
+                      <p class="service-name">Market data</p>
+                      <p class="service-role">Ingress and normalization</p>
+                    </div>
+                    <span class="badge is-checking" id="market-data-badge">checking</span>
+                  </div>
+                  <p class="service-status" id="market-data-status">Waiting for service response.</p>
+                  <dl class="detail-grid">
+                    <div>
+                      <dt>endpoint</dt>
+                      <dd>/api/market-data/readyz</dd>
+                    </div>
+                    <div>
+                      <dt>scope</dt>
+                      <dd>market ingress</dd>
+                    </div>
+                  </dl>
+                </section>
+
+                <section class="service-card" id="feature-pipeline-card">
+                  <div class="service-head">
+                    <div>
+                      <p class="service-name">Feature pipeline</p>
+                      <p class="service-role">Transform and enrich</p>
+                    </div>
+                    <span class="badge is-checking" id="feature-pipeline-badge">checking</span>
+                  </div>
+                  <p class="service-status" id="feature-pipeline-status">Waiting for service response.</p>
+                  <dl class="detail-grid">
+                    <div>
+                      <dt>endpoint</dt>
+                      <dd>/api/feature-pipeline/readyz</dd>
+                    </div>
+                    <div>
+                      <dt>scope</dt>
+                      <dd>derived features</dd>
+                    </div>
+                  </dl>
+                </section>
+
+                <section class="service-card" id="strategy-engine-card">
+                  <div class="service-head">
+                    <div>
+                      <p class="service-name">Strategy engine</p>
+                      <p class="service-role">Signal generation</p>
+                    </div>
+                    <span class="badge is-checking" id="strategy-engine-badge">checking</span>
+                  </div>
+                  <p class="service-status" id="strategy-engine-status">Waiting for service response.</p>
+                  <dl class="detail-grid">
+                    <div>
+                      <dt>endpoint</dt>
+                      <dd>/api/strategy-engine/readyz</dd>
+                    </div>
+                    <div>
+                      <dt>scope</dt>
+                      <dd>proposal logic</dd>
+                    </div>
+                  </dl>
+                </section>
+              </div>
+            </article>
+
+            <article class="panel panel-span-4 panel-tint">
+              <div class="panel-header">
+                <div>
+                  <p class="section-kicker">Portfolio management</p>
+                  <h3>Ledger and risk posture</h3>
+                </div>
+                <span class="badge section-badge">not connected</span>
+              </div>
+              <p class="panel-copy" id="portfolio-status">
+                Portfolio balances, position inventory, and risk limits are not yet exposed on this edge.
               </p>
-            </article>
-            <article class="card">
-              <div class="card-header">
-                <span>Market Data</span>
-                <span class="badge" id="market-data-badge">checking</span>
+              <div class="stack-list">
+                <div class="list-row">
+                  <span>Position ledger</span>
+                  <strong>awaiting portfolio service</strong>
+                </div>
+                <div class="list-row">
+                  <span>Margin and collateral</span>
+                  <strong>not connected</strong>
+                </div>
+                <div class="list-row">
+                  <span>Exposure limits</span>
+                  <strong>manual review only</strong>
+                </div>
               </div>
-              <p id="market-data-status">Waiting for service response.</p>
             </article>
-            <article class="card">
-              <div class="card-header">
-                <span>Feature Pipeline</span>
-                <span class="badge" id="feature-pipeline-badge">checking</span>
+
+            <article class="panel panel-span-4">
+              <div class="panel-header">
+                <div>
+                  <p class="section-kicker">Trading management</p>
+                  <h3>Release controls</h3>
+                </div>
+                <span class="badge is-blocked">blocked</span>
               </div>
-              <p id="feature-pipeline-status">Waiting for service response.</p>
-            </article>
-            <article class="card">
-              <div class="card-header">
-                <span>Strategy Engine</span>
-                <span class="badge" id="strategy-engine-badge">checking</span>
-              </div>
-              <p id="strategy-engine-status">Waiting for service response.</p>
-            </article>
-            <article class="card wide caution">
-              <div class="card-header">
-                <span>Execution guardrail</span>
-                <span class="badge warn">blocked</span>
-              </div>
-              <h2>Trading stays disabled</h2>
-              <p>
-                The previously shared Binance keys are treated as compromised. Futures order testing remains disabled until
-                rotated credentials are injected through Kubernetes secrets and an execution service with hard trade-count limits exists.
+              <p class="panel-copy" id="trading-status">
+                Order routing remains disabled until rotated credentials and bounded execution controls are published.
               </p>
+              <div class="stack-list">
+                <div class="list-row">
+                  <span>Order entry</span>
+                  <strong>disabled</strong>
+                </div>
+                <div class="list-row">
+                  <span>Kill switch</span>
+                  <strong>engaged by default</strong>
+                </div>
+                <div class="list-row">
+                  <span>Venue route</span>
+                  <strong>closed pending secret rotation</strong>
+                </div>
+              </div>
+            </article>
+
+            <article class="panel panel-span-4">
+              <div class="panel-header">
+                <div>
+                  <p class="section-kicker">Proposals and signals</p>
+                  <h3>Decision flow</h3>
+                </div>
+                <span class="badge section-badge" id="signal-badge">awaiting data</span>
+              </div>
+              <p class="panel-copy" id="signal-status">
+                Proposal review remains unavailable until strategy output is published into a reviewable feed.
+              </p>
+              <div class="stack-list">
+                <div class="list-row">
+                  <span>Signal queue</span>
+                  <strong id="signal-posture">not connected</strong>
+                </div>
+                <div class="list-row">
+                  <span>Analyst approval</span>
+                  <strong>manual workflow absent</strong>
+                </div>
+                <div class="list-row">
+                  <span>Distribution channel</span>
+                  <strong>awaiting adapter</strong>
+                </div>
+              </div>
+            </article>
+
+            <article class="panel panel-span-4 panel-tint">
+              <div class="panel-header">
+                <div>
+                  <p class="section-kicker">Fills and execution</p>
+                  <h3>Broker acknowledgements</h3>
+                </div>
+                <span class="badge is-blocked">awaiting execution service</span>
+              </div>
+              <p class="panel-copy" id="execution-status">
+                No execution endpoint is currently published from the edge, so live orders, fills, and reject messages are unavailable.
+              </p>
+              <div class="stack-list">
+                <div class="list-row">
+                  <span>Order blotter</span>
+                  <strong>empty by design</strong>
+                </div>
+                <div class="list-row">
+                  <span>Exchange acknowledgements</span>
+                  <strong>not connected</strong>
+                </div>
+                <div class="list-row">
+                  <span>Fill archive</span>
+                  <strong>awaiting bounded execution plane</strong>
+                </div>
+              </div>
+            </article>
+
+            <article class="panel panel-span-8">
+              <div class="panel-header">
+                <div>
+                  <p class="section-kicker">System monitoring</p>
+                  <h3>Platform visibility</h3>
+                </div>
+                <span class="badge section-badge">ops telemetry</span>
+              </div>
+              <p class="panel-copy" id="monitoring-status">
+                Public edge checks update on a fixed polling cadence. Additional telemetry can be surfaced here once log, queue, and deployment signals are published.
+              </p>
+              <div class="monitor-grid">
+                <div class="monitor-card">
+                  <span class="metric-label">public edge</span>
+                  <strong id="edge-status">waiting for checks</strong>
+                  <p>Readiness is measured from the same static site your operators will use.</p>
+                </div>
+                <div class="monitor-card">
+                  <span class="metric-label">poll cadence</span>
+                  <strong>15 seconds</strong>
+                  <p>Service checks keep the dashboard current without inventing unsupported APIs.</p>
+                </div>
+                <div class="monitor-card">
+                  <span class="metric-label">deployment surface</span>
+                  <strong>nginx configmap</strong>
+                  <p>Static assets mirror cleanly into the existing delivery path at rollout time.</p>
+                </div>
+              </div>
+            </article>
+
+            <article class="panel panel-span-12 guardrail-panel">
+              <div class="panel-header">
+                <div>
+                  <p class="section-kicker">Operational guardrails</p>
+                  <h3>Conditions for enabling execution</h3>
+                </div>
+                <span class="badge is-blocked">hard stop</span>
+              </div>
+              <div class="guardrail-grid">
+                <div class="guardrail-item">
+                  <span class="guardrail-index">01</span>
+                  <p>Replace compromised venue credentials and inject them through managed secrets only.</p>
+                </div>
+                <div class="guardrail-item">
+                  <span class="guardrail-index">02</span>
+                  <p>Publish a dedicated execution service with explicit trade-count, notional, and venue allowlist controls.</p>
+                </div>
+                <div class="guardrail-item">
+                  <span class="guardrail-index">03</span>
+                  <p>Expose portfolio and fill data before any routing path is opened so operators can verify state transitions.</p>
+                </div>
+                <div class="guardrail-item">
+                  <span class="guardrail-index">04</span>
+                  <p>Keep the desk on manual approval until proposal review, kill switch visibility, and audit logging are wired end to end.</p>
+                </div>
+              </div>
             </article>
           </section>
         </main>
@@ -82,96 +328,777 @@ data:
     </html>
   styles.css: |
     :root {
-      --bg: #07111c;
-      --bg-soft: #0c1b2c;
-      --panel: rgba(8, 20, 34, 0.78);
-      --panel-strong: rgba(12, 29, 49, 0.92);
-      --text: #edf4fb;
-      --muted: #9eb3c8;
-      --line: rgba(150, 177, 204, 0.18);
-      --ok: #38d39f;
-      --warn: #ffb44c;
-      --shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
+      --bg: #061018;
+      --bg-deep: #03070d;
+      --panel: rgba(10, 20, 30, 0.88);
+      --panel-strong: rgba(12, 26, 39, 0.96);
+      --panel-soft: rgba(14, 31, 45, 0.78);
+      --text: #edf3f8;
+      --muted: #91a5b8;
+      --muted-strong: #bfd0df;
+      --line: rgba(140, 164, 184, 0.18);
+      --line-strong: rgba(165, 190, 211, 0.26);
+      --accent: #8bb8ff;
+      --accent-soft: rgba(139, 184, 255, 0.14);
+      --ok: #4dd3a7;
+      --warn: #ffbf66;
+      --danger: #ff7a5c;
+      --shadow: 0 30px 80px rgba(0, 0, 0, 0.38);
     }
-    * { box-sizing: border-box; }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
     body {
       margin: 0;
       min-height: 100vh;
-      font-family: "Space Grotesk", sans-serif;
-      background: radial-gradient(circle at top left, rgba(29, 145, 255, 0.22), transparent 32%), radial-gradient(circle at bottom right, rgba(56, 211, 159, 0.18), transparent 28%), linear-gradient(160deg, var(--bg), #02070d 72%);
+      overflow-x: hidden;
+      font-family: "IBM Plex Sans", sans-serif;
       color: var(--text);
+      background:
+        radial-gradient(circle at 10% 12%, rgba(72, 118, 186, 0.22), transparent 28%),
+        radial-gradient(circle at 90% 18%, rgba(27, 68, 109, 0.2), transparent 26%),
+        radial-gradient(circle at 50% 100%, rgba(69, 135, 110, 0.12), transparent 32%),
+        linear-gradient(165deg, #08131d 0%, var(--bg-deep) 72%);
     }
-    .backdrop {
+
+    body::before {
+      content: "";
       position: fixed;
       inset: 0;
-      background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-      background-size: 48px 48px;
-      mask-image: radial-gradient(circle at center, black 42%, transparent 85%);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 18%, transparent 82%, rgba(255, 255, 255, 0.02));
       pointer-events: none;
     }
-    .shell { position: relative; width: min(1120px, calc(100vw - 32px)); margin: 0 auto; padding: 56px 0 72px; }
-    .hero {
-      padding: 32px;
+
+    .backdrop,
+    .noise {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .backdrop {
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+      background-size: 72px 72px;
+      mask-image: radial-gradient(circle at center, black 36%, transparent 88%);
+      opacity: 0.5;
+    }
+
+    .noise {
+      opacity: 0.08;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.9) 0.5px, transparent 0.5px);
+      background-size: 8px 8px;
+    }
+
+    .shell {
+      position: relative;
+      width: min(1380px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 24px 0 48px;
+    }
+
+    .panel {
+      position: relative;
+      overflow: hidden;
       border: 1px solid var(--line);
       border-radius: 28px;
-      background: linear-gradient(180deg, rgba(13, 30, 50, 0.9), rgba(7, 18, 31, 0.84));
+      background: linear-gradient(180deg, rgba(14, 27, 40, 0.94), rgba(8, 16, 24, 0.94));
       box-shadow: var(--shadow);
     }
-    .eyebrow, .hero-meta, .card-header, .badge { font-family: "IBM Plex Mono", monospace; letter-spacing: 0.04em; }
-    .eyebrow { margin: 0 0 12px; color: #78b9ff; text-transform: uppercase; font-size: 12px; }
-    h1, h2 { margin: 0; line-height: 1; }
-    h1 { font-size: clamp(2.4rem, 6vw, 5rem); max-width: 10ch; }
-    .lead { max-width: 720px; margin: 18px 0 0; color: var(--muted); font-size: 1.02rem; line-height: 1.7; }
-    .hero-meta { display: flex; align-items: center; gap: 12px; margin-top: 24px; color: var(--muted); font-size: 0.8rem; }
-    .dot { width: 6px; height: 6px; border-radius: 999px; background: var(--ok); box-shadow: 0 0 14px var(--ok); }
-    .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; margin-top: 18px; }
-    .card {
-      grid-column: span 4;
-      min-height: 180px;
-      padding: 24px;
-      border-radius: 24px;
+
+    .panel::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.04), transparent 24%, transparent 76%, rgba(255, 255, 255, 0.03));
+      pointer-events: none;
+    }
+
+    .panel-tint {
+      background: linear-gradient(180deg, rgba(16, 34, 49, 0.96), rgba(9, 18, 28, 0.94));
+    }
+
+    .topbar {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 24px 28px;
+    }
+
+    .eyebrow,
+    .section-kicker,
+    .badge,
+    .metric-label,
+    .meta-label,
+    .service-role,
+    .service-name,
+    .detail-grid dt,
+    .guardrail-index {
+      font-family: "IBM Plex Mono", monospace;
+      letter-spacing: 0.06em;
+    }
+
+    .eyebrow,
+    .section-kicker {
+      margin: 0;
+      color: var(--accent);
+      font-size: 0.74rem;
+      text-transform: uppercase;
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+    }
+
+    h2 {
+      max-width: 12ch;
+      font-size: clamp(2.1rem, 5vw, 4.4rem);
+      line-height: 0.95;
+      letter-spacing: -0.05em;
+    }
+
+    h3 {
+      margin-top: 10px;
+      font-size: 1.3rem;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+    }
+
+    .topbar-meta {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    .meta-chip,
+    .metric-card,
+    .monitor-card,
+    .service-card,
+    .guardrail-item {
       border: 1px solid var(--line);
-      background: var(--panel);
-      backdrop-filter: blur(14px);
-      box-shadow: var(--shadow);
+      background: rgba(255, 255, 255, 0.025);
     }
-    .card.emphasis { grid-column: span 12; background: linear-gradient(180deg, rgba(16, 36, 59, 0.92), rgba(7, 21, 35, 0.9)); }
-    .card.wide { grid-column: span 12; }
-    .card-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 0.8rem; text-transform: uppercase; color: var(--muted); }
-    .card p { margin: 18px 0 0; color: var(--muted); line-height: 1.7; }
-    .card h2 { margin-top: 18px; font-size: 1.8rem; }
-    .badge { display: inline-flex; align-items: center; justify-content: center; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--line); font-size: 0.72rem; text-transform: uppercase; }
-    .badge.ok { color: var(--ok); border-color: rgba(56, 211, 159, 0.28); background: rgba(56, 211, 159, 0.12); }
-    .badge.warn { color: var(--warn); border-color: rgba(255, 180, 76, 0.28); background: rgba(255, 180, 76, 0.12); }
-    .caution { background: linear-gradient(180deg, rgba(44, 27, 11, 0.86), rgba(18, 11, 6, 0.9)); }
-    @media (max-width: 880px) {
-      .shell { width: min(100vw - 20px, 1120px); padding-top: 24px; }
-      .hero, .card { padding: 20px; border-radius: 20px; }
-      .card, .card.emphasis, .card.wide { grid-column: span 12; }
+
+    .meta-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 48px;
+      padding: 0 14px;
+      border-radius: 999px;
+      color: var(--muted-strong);
+    }
+
+    .meta-chip strong {
+      font-size: 0.92rem;
+      font-weight: 600;
+    }
+
+    .meta-label,
+    .metric-label {
+      color: var(--muted);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+    }
+
+    .pulse-chip {
+      background: rgba(77, 211, 167, 0.08);
+    }
+
+    .pulse-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--ok);
+      box-shadow: 0 0 16px rgba(77, 211, 167, 0.8);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.95fr);
+      gap: 24px;
+      margin-top: 18px;
+      padding: 30px;
+    }
+
+    .hero-copy {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 320px;
+      padding-right: 20px;
+    }
+
+    .lead,
+    .panel-copy,
+    .service-status,
+    .monitor-card p,
+    .guardrail-item p {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .lead {
+      max-width: 60ch;
+      margin-top: 22px;
+      font-size: 1rem;
+    }
+
+    .hero-aside {
+      display: grid;
+      gap: 16px;
+      align-content: stretch;
+    }
+
+    .hero-summary {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-height: 160px;
+      padding: 22px;
+      border-radius: 24px;
+      border: 1px solid var(--line-strong);
+      background: linear-gradient(180deg, rgba(20, 41, 58, 0.95), rgba(10, 21, 31, 0.95));
+    }
+
+    .hero-summary strong {
+      font-size: clamp(1.6rem, 3vw, 2.4rem);
+      line-height: 1;
+      letter-spacing: -0.04em;
+    }
+
+    .metric-grid,
+    .monitor-grid,
+    .guardrail-grid,
+    .service-grid,
+    .dashboard-grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .metric-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .metric-card {
+      min-height: 108px;
+      padding: 18px;
+      border-radius: 22px;
+    }
+
+    .metric-card strong,
+    .monitor-card strong {
+      display: block;
+      margin-top: 12px;
+      font-size: 1.25rem;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+    }
+
+    .caution-card {
+      background: linear-gradient(180deg, rgba(45, 31, 13, 0.86), rgba(24, 16, 9, 0.94));
+    }
+
+    .dashboard-grid {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      margin-top: 18px;
+    }
+
+    .panel-span-4,
+    .panel-span-8,
+    .panel-span-12 {
+      padding: 24px;
+    }
+
+    .panel-span-4 {
+      grid-column: span 4;
+    }
+
+    .panel-span-8 {
+      grid-column: span 8;
+    }
+
+    .panel-span-12 {
+      grid-column: span 12;
+    }
+
+    .panel-header,
+    .service-head,
+    .list-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .panel-copy {
+      margin-top: 16px;
+    }
+
+    .service-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin-top: 18px;
+    }
+
+    .service-card {
+      position: relative;
+      padding: 20px;
+      border-radius: 22px;
+    }
+
+    .service-card::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 3px;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .service-card.ready::before {
+      background: var(--ok);
+    }
+
+    .service-card.degraded::before {
+      background: var(--warn);
+    }
+
+    .service-name {
+      color: var(--muted-strong);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+    }
+
+    .service-role {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+    }
+
+    .service-status {
+      margin-top: 18px;
+      min-height: 72px;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .detail-grid div {
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+    }
+
+    .detail-grid dt {
+      color: var(--muted);
+      font-size: 0.68rem;
+      text-transform: uppercase;
+    }
+
+    .detail-grid dd {
+      margin: 8px 0 0;
+      color: var(--muted-strong);
+      font-size: 0.92rem;
+    }
+
+    .stack-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .list-row {
+      padding: 14px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .list-row:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .list-row span {
+      color: var(--muted);
+    }
+
+    .list-row strong {
+      max-width: 15ch;
+      text-align: right;
+      font-size: 0.94rem;
+      line-height: 1.4;
+    }
+
+    .monitor-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin-top: 20px;
+    }
+
+    .monitor-card {
+      min-height: 164px;
+      padding: 18px;
+      border-radius: 22px;
+    }
+
+    .monitor-card p {
+      margin-top: 14px;
+    }
+
+    .guardrail-panel {
+      background: linear-gradient(180deg, rgba(30, 22, 14, 0.95), rgba(13, 10, 8, 0.96));
+    }
+
+    .guardrail-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      margin-top: 20px;
+    }
+
+    .guardrail-item {
+      min-height: 180px;
+      padding: 18px;
+      border-radius: 22px;
+    }
+
+    .guardrail-index {
+      display: inline-flex;
+      color: var(--warn);
+      font-size: 0.78rem;
+    }
+
+    .guardrail-item p {
+      margin-top: 18px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 32px;
+      padding: 0 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--muted-strong);
+      font-size: 0.69rem;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .static-badge,
+    .section-badge,
+    .is-checking {
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .is-ready {
+      color: var(--ok);
+      background: rgba(77, 211, 167, 0.12);
+      border-color: rgba(77, 211, 167, 0.3);
+    }
+
+    .is-degraded {
+      color: var(--warn);
+      background: rgba(255, 191, 102, 0.12);
+      border-color: rgba(255, 191, 102, 0.3);
+    }
+
+    .is-blocked {
+      color: var(--danger);
+      background: rgba(255, 122, 92, 0.12);
+      border-color: rgba(255, 122, 92, 0.28);
+    }
+
+    @media (max-width: 1180px) {
+      .hero {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-copy {
+        min-height: auto;
+        padding-right: 0;
+      }
+
+      .panel-span-8,
+      .panel-span-4 {
+        grid-column: span 6;
+      }
+
+      .guardrail-grid,
+      .monitor-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .service-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 820px) {
+      .shell {
+        width: min(100vw - 20px, 1380px);
+        padding-top: 12px;
+      }
+
+      .panel,
+      .hero-summary,
+      .metric-card,
+      .service-card,
+      .monitor-card,
+      .guardrail-item {
+        border-radius: 22px;
+      }
+
+      .topbar,
+      .hero,
+      .panel-span-4,
+      .panel-span-8,
+      .panel-span-12 {
+        padding: 20px;
+      }
+
+      .topbar {
+        flex-direction: column;
+      }
+
+      .topbar-meta {
+        justify-content: flex-start;
+      }
+
+      .dashboard-grid,
+      .metric-grid,
+      .monitor-grid,
+      .guardrail-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .panel-span-4,
+      .panel-span-8,
+      .panel-span-12 {
+        grid-column: span 12;
+      }
+
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 560px) {
+      h1 {
+        font-size: 1.8rem;
+      }
+
+      h2 {
+        font-size: 2rem;
+      }
+
+      .brand-row {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .meta-chip,
+      .badge {
+        width: 100%;
+        justify-content: flex-start;
+      }
+
+      .service-head,
+      .panel-header,
+      .list-row {
+        flex-direction: column;
+      }
+
+      .list-row strong {
+        max-width: none;
+        text-align: left;
+      }
+
+      .metric-card,
+      .monitor-card,
+      .guardrail-item {
+        min-height: auto;
+      }
     }
   app.js: |
     const services = [
-      { id: 'market-data', label: 'Market Data' },
-      { id: 'feature-pipeline', label: 'Feature Pipeline' },
-      { id: 'strategy-engine', label: 'Strategy Engine' },
+      { id: 'market-data', label: 'Market data' },
+      { id: 'feature-pipeline', label: 'Feature pipeline' },
+      { id: 'strategy-engine', label: 'Strategy engine' },
     ];
-    document.getElementById('timestamp').textContent = new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
-    for (const service of services) { checkService(service); }
+
+    const pollIntervalMs = 15000;
+
+    const elements = {
+      timestamp: document.getElementById('timestamp'),
+      platformStatus: document.getElementById('platform-status'),
+      platformSummary: document.getElementById('platform-summary'),
+      pollState: document.getElementById('poll-state'),
+      healthyCount: document.getElementById('healthy-count'),
+      degradedCount: document.getElementById('degraded-count'),
+      portfolioStatus: document.getElementById('portfolio-status'),
+      tradingStatus: document.getElementById('trading-status'),
+      signalBadge: document.getElementById('signal-badge'),
+      signalStatus: document.getElementById('signal-status'),
+      signalPosture: document.getElementById('signal-posture'),
+      executionStatus: document.getElementById('execution-status'),
+      monitoringStatus: document.getElementById('monitoring-status'),
+      edgeStatus: document.getElementById('edge-status'),
+    };
+
+    pollReadiness();
+    window.setInterval(pollReadiness, pollIntervalMs);
+
+    async function pollReadiness() {
+      setPollTimestamp();
+      elements.pollState.textContent = 'polling readiness';
+
+      const results = await Promise.all(services.map(checkService));
+      updateDashboard(results);
+    }
+
     async function checkService(service) {
       const badge = document.getElementById(`${service.id}-badge`);
       const text = document.getElementById(`${service.id}-status`);
+      const card = document.getElementById(`${service.id}-card`);
+
       try {
         const response = await fetch(`/api/${service.id}/readyz`, { cache: 'no-store' });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
         const payload = await response.json();
         const status = payload.status || 'unknown';
+        const isReady = status === 'ready';
+        const checks = formatChecks(payload.checks);
+
         badge.textContent = status;
-        badge.classList.toggle('ok', status === 'ready');
-        badge.classList.toggle('warn', status !== 'ready');
-        const checks = payload.checks ? Object.entries(payload.checks).map(([key, value]) => `${key}: ${value}`).join(' / ') : 'no checks';
+        badge.className = `badge ${isReady ? 'is-ready' : 'is-degraded'}`;
+        card.classList.toggle('ready', isReady);
+        card.classList.toggle('degraded', !isReady);
         text.textContent = `${service.label} reports ${status}. ${checks}`;
+
+        return { id: service.id, label: service.label, status, ready: isReady };
       } catch (error) {
         badge.textContent = 'offline';
-        badge.classList.add('warn');
+        badge.className = 'badge is-degraded';
+        card.classList.remove('ready');
+        card.classList.add('degraded');
         text.textContent = `${service.label} is unreachable from the public edge.`;
+
+        return { id: service.id, label: service.label, status: 'offline', ready: false };
       }
+    }
+
+    function updateDashboard(results) {
+      const readyCount = results.filter((result) => result.ready).length;
+      const degradedCount = results.length - readyCount;
+      const marketReady = isServiceReady(results, 'market-data');
+      const featureReady = isServiceReady(results, 'feature-pipeline');
+      const strategyReady = isServiceReady(results, 'strategy-engine');
+
+      elements.timestamp.textContent = formatTimestamp();
+      elements.healthyCount.textContent = `${readyCount} / ${results.length}`;
+      elements.degradedCount.textContent = String(degradedCount);
+
+      if (readyCount === results.length) {
+        elements.platformStatus.textContent = 'Core services ready';
+        elements.platformSummary.textContent = 'Market data, feature computation, and strategy readiness are all reporting healthy from the public edge. Execution remains blocked until a bounded execution plane is published.';
+        elements.edgeStatus.textContent = 'healthy across all published services';
+        elements.pollState.textContent = 'all published checks green';
+      } else if (readyCount > 0) {
+        elements.platformStatus.textContent = 'Partial readiness';
+        elements.platformSummary.textContent = `${readyCount} of ${results.length} published services are ready. Operators can observe the live plane, but downstream workflows should remain manual until degraded services recover.`;
+        elements.edgeStatus.textContent = 'degraded but partially observable';
+        elements.pollState.textContent = 'degraded services detected';
+      } else {
+        elements.platformStatus.textContent = 'Edge visibility degraded';
+        elements.platformSummary.textContent = 'None of the published readiness checks are responding from the public edge. Treat the console as a deployment shell until service health returns.';
+        elements.edgeStatus.textContent = 'no published services responding';
+        elements.pollState.textContent = 'waiting for service recovery';
+      }
+
+      if (marketReady || featureReady) {
+        elements.portfolioStatus.textContent = 'Market context is reachable, but portfolio balances, positions, and risk limits are still not exposed on this edge.';
+      } else {
+        elements.portfolioStatus.textContent = 'Portfolio balances, position inventory, and risk limits are not yet exposed on this edge.';
+      }
+
+      if (marketReady && featureReady) {
+        elements.tradingStatus.textContent = 'Market and feature services are reachable, but order routing remains disabled until rotated credentials and bounded execution controls are published.';
+      } else {
+        elements.tradingStatus.textContent = 'Order routing remains disabled until core readiness stabilizes, rotated credentials are supplied, and bounded execution controls are published.';
+      }
+
+      if (strategyReady) {
+        elements.signalBadge.textContent = 'strategy ready';
+        elements.signalBadge.className = 'badge is-ready';
+        elements.signalPosture.textContent = 'proposal feed not connected';
+        elements.signalStatus.textContent = 'The strategy engine is reporting ready, but its proposals are not yet exposed through a review queue on this edge.';
+      } else {
+        elements.signalBadge.textContent = 'awaiting strategy';
+        elements.signalBadge.className = 'badge is-degraded';
+        elements.signalPosture.textContent = 'waiting for strategy readiness';
+        elements.signalStatus.textContent = 'Proposal review remains unavailable until strategy output is published into a reviewable feed.';
+      }
+
+      elements.executionStatus.textContent = 'No execution endpoint is currently published from the edge, so live orders, fills, reject messages, and broker acknowledgements remain unavailable.';
+      elements.monitoringStatus.textContent = `Public edge checks update every ${pollIntervalMs / 1000} seconds. Additional telemetry can be surfaced here once log, queue, and deployment signals are published.`;
+    }
+
+    function isServiceReady(results, serviceId) {
+      return results.some((result) => result.id === serviceId && result.ready);
+    }
+
+    function formatChecks(checks) {
+      if (!checks || typeof checks !== 'object') {
+        return 'No detailed checks were published.';
+      }
+
+      const summary = Object.entries(checks)
+        .map(([key, value]) => `${key}: ${value}`)
+        .join(' / ');
+
+      return summary || 'No detailed checks were published.';
+    }
+
+    function setPollTimestamp() {
+      elements.timestamp.textContent = formatTimestamp();
+    }
+
+    function formatTimestamp() {
+      return new Date().toLocaleString('en-US', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      });
     }

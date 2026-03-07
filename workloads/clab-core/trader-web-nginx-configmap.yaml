@@ -8,6 +8,7 @@ data:
     server {
       listen 8080;
       server_name _;
+
       root /usr/share/nginx/html;
       index index.html;
 
@@ -40,18 +41,15 @@ data:
       }
 
       location /api/market-data/ {
-        rewrite ^/api/market-data/(.*)$ /$1 break;
-        proxy_pass http://market-data.clab-core.svc.cluster.local;
+        proxy_pass http://market-data.clab-core.svc.cluster.local/;
       }
 
       location /api/feature-pipeline/ {
-        rewrite ^/api/feature-pipeline/(.*)$ /$1 break;
-        proxy_pass http://feature-pipeline.clab-core.svc.cluster.local;
+        proxy_pass http://feature-pipeline.clab-core.svc.cluster.local/;
       }
 
       location /api/strategy-engine/ {
-        rewrite ^/api/strategy-engine/(.*)$ /$1 break;
-        proxy_pass http://strategy-engine.clab-core.svc.cluster.local;
+        proxy_pass http://strategy-engine.clab-core.svc.cluster.local/;
       }
 
       location / {
