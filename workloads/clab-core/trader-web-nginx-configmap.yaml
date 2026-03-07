@@ -11,10 +11,32 @@ data:
       root /usr/share/nginx/html;
       index index.html;
 
+      location = / {
+        try_files /index.html =404;
+      }
+
       location = /healthz {
         access_log off;
         add_header Content-Type text/plain;
         return 200 'ok';
+      }
+
+      location = /styles.css {
+        try_files /styles.css =404;
+      }
+
+      location = /app.js {
+        try_files /app.js =404;
+      }
+
+      location = /favicon.ico {
+        access_log off;
+        return 204;
+      }
+
+      location = /robots.txt {
+        add_header Content-Type text/plain;
+        return 200 "User-agent: *\nAllow: /\n";
       }
 
       location /api/market-data/ {
@@ -33,6 +55,6 @@ data:
       }
 
       location / {
-        try_files $uri $uri/ /index.html;
+        return 404;
       }
     }
