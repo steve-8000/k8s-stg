@@ -1,8 +1,39 @@
 const authStorageKey = 'clab-auth-token';
 let authToken = localStorage.getItem(authStorageKey) || '';
+let authStepUp = false;
+let authPermissions = [];
 let realtimeSocket = null;
 let commandIntent = null;
 let latestOrders = [];
+let latestProposalQueue = null;
+let latestProposalReviews = null;
+let selectedProposalId = null;
+
+const supportedControlCommands = {
+  'cancel-all': {
+    endpoint: '/api/control-service/execution/cancel-all',
+    label: 'cancel_all',
+  },
+  flatten: {
+    endpoint: '/api/control-service/execution/flatten',
+    label: 'flatten',
+  },
+  'kill-switch': {
+    endpoint: '/api/control-service/risk/kill-switch/arm',
+    label: 'kill_switch_arm',
+  },
+  'kill-switch-release': {
+    endpoint: '/api/control-service/risk/kill-switch/release',
+    label: 'kill_switch_release',
+  },
+};
+
+const requiredPermissionForCommand = {
+  'cancel-all': 'trading.cancel_all',
+  flatten: 'trading.flatten_positions',
+  'kill-switch': 'trading.kill_switch',
+  'kill-switch-release': 'trading.kill_switch',
+};
 
 const elements = {
   pollState: document.getElementById('poll-state'),
@@ -18,6 +49,14 @@ const elements = {
   incidentBadge: document.getElementById('incident-badge'),
   incidentList: document.getElementById('incident-list'),
   approvalBadge: document.getElementById('approval-badge'),
+  proposalQueueList: document.getElementById('proposal-queue-list'),
+  proposalReasonInput: document.getElementById('proposal-reason-input'),
+  proposalApproveButton: document.getElementById('proposal-approve-button'),
+  proposalHoldButton: document.getElementById('proposal-hold-button'),
+  proposalRejectButton: document.getElementById('proposal-reject-button'),
+  proposalReviewState: document.getElementById('proposal-review-state'),
+  proposalHistoryBadge: document.getElementById('proposal-history-badge'),
+  proposalHistoryList: document.getElementById('proposal-history-list'),
   commandObserved: document.getElementById('command-observed'),
   ordersBadge: document.getElementById('orders-badge'),
   ordersTableBody: document.getElementById('orders-table-body'),
@@ -37,22 +76,29 @@ const elements = {
   contextActionsList: document.getElementById('context-actions-list'),
   authSessionState: document.getElementById('auth-session-state'),
   authSessionDetail: document.getElementById('auth-session-detail'),
+  authPermissionsList: document.getElementById('auth-permissions-list'),
   authUsernameInput: document.getElementById('auth-username-input'),
   authPasswordInput: document.getElementById('auth-password-input'),
   authLoginButton: document.getElementById('auth-login-button'),
+  authStepUpButton: document.getElementById('auth-step-up-button'),
   authLogoutButton: document.getElementById('auth-logout-button'),
   commandDialog: document.getElementById('command-dialog'),
   commandDialogTitle: document.getElementById('command-dialog-title'),
   commandDialogBody: document.getElementById('command-dialog-body'),
   commandReasonInput: document.getElementById('command-reason-input'),
+  commandConfirmButton: document.getElementById('command-confirm-button'),
 };
 
-document.querySelectorAll('.command-button').forEach((button) => {
+document.querySelectorAll('[data-command]').forEach((button) => {
   button.addEventListener('click', () => openCommandDialog(button.dataset.command));
 });
 elements.authLoginButton.addEventListener('click', submitAuthLogin);
+elements.authStepUpButton.addEventListener('click', submitAuthStepUp);
 elements.authLogoutButton.addEventListener('click', clearAuthSession);
 elements.commandDialog.addEventListener('close', handleCommandDialogClose);
+elements.proposalApproveButton.addEventListener('click', () => submitProposalReview('approve'));
+elements.proposalHoldButton.addEventListener('click', () => submitProposalReview('hold'));
+elements.proposalRejectButton.addEventListener('click', () => submitProposalReview('reject'));
 
 bootstrap();
 
@@ -71,17 +117,25 @@ async function hydrateAuthSession() {
   const response = await fetch('/api/auth-service/auth/verify', { cache: 'no-store', headers: { Authorization: `Bearer ${authToken}` } }).catch(() => null);
   if (!response || !response.ok) {
     clearAuthSession(false);
+    return;
   }
+  const payload = await response.json().catch(() => null);
+  authStepUp = payload?.step_up === true;
+  authPermissions = Array.isArray(payload?.permissions) ? payload.permissions : [];
 }
 
 async function refreshDashboard() {
-  const [overview, strategies, orders, positions, reconciliation, services] = await Promise.all([
+  const [overview, strategies, orders, positions, reconciliation, services, alerts, controlState, proposalQueue, proposalReviews] = await Promise.all([
     fetchJSON('/api/query-api/accounts/main/overview'),
     fetchJSON('/api/query-api/strategies'),
     fetchJSON('/api/query-api/orders?account_id=main'),
     fetchJSON('/api/query-api/positions?account_id=main'),
     fetchJSON('/api/query-api/reconciliation/status?account_id=main'),
     fetchJSON('/api/query-api/services/health'),
+    fetchJSON('/api/notification-service/alerts'),
+    fetchJSON('/api/control-service/state'),
+    fetchJSON('/api/proposal-service/queue'),
+    fetchJSON('/api/proposal-service/reviews'),
   ]);
   renderOverview(overview);
   renderStrategies(strategies);
@@ -89,20 +143,33 @@ async function refreshDashboard() {
   renderPositions(positions);
   renderReconciliation(reconciliation);
   renderServices(services);
+  renderIncidents(alerts);
+  renderControlState(controlState);
+  renderProposalQueue(proposalQueue, proposalReviews);
 }
 
 function connectRealtime() {
   if (realtimeSocket) {
     realtimeSocket.close();
   }
+  if (!authToken) {
+    setRealtimeState('Realtime locked', 'Sign in to unlock live patches from the realtime gateway.');
+    return;
+  }
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  realtimeSocket = new WebSocket(`${protocol}//${window.location.host}/api/realtime-gateway/ws?account_id=main`);
+  realtimeSocket = new WebSocket(`${protocol}//${window.location.host}/api/realtime-gateway/ws?token=${encodeURIComponent(authToken)}&account_id=main`);
   realtimeSocket.addEventListener('open', () => setRealtimeState('Realtime connected', 'Live patches are flowing from the realtime gateway.'));
   realtimeSocket.addEventListener('message', (event) => {
     const payload = JSON.parse(event.data);
     applyRealtimePayload(payload.channels || {});
   });
-  realtimeSocket.addEventListener('close', () => setRealtimeState('Realtime disconnected', 'Dashboard is showing the last known good snapshot with stale markings.'));
+  realtimeSocket.addEventListener('close', () => {
+    if (!authToken) {
+      setRealtimeState('Realtime locked', 'Sign in to unlock live patches from the realtime gateway.');
+      return;
+    }
+    setRealtimeState('Realtime disconnected', 'Dashboard is showing the last known good snapshot with stale markings.');
+  });
   realtimeSocket.addEventListener('error', () => setRealtimeState('Realtime error', 'Realtime gateway is unavailable, so only query snapshots are shown.'));
 }
 
@@ -110,14 +177,29 @@ function applyRealtimePayload(channels) {
   if (channels['account.health']) {
     renderOverview(channels['account.health']);
   }
+  if (channels['strategy.runtime']) {
+    renderStrategies(channels['strategy.runtime']);
+  }
   if (channels['orders.lifecycle']) {
     renderOrders(channels['orders.lifecycle']);
   }
   if (channels['positions.risk']) {
     renderPositions(channels['positions.risk']);
   }
+  if (channels.reconciliation) {
+    renderReconciliation(channels.reconciliation);
+  }
   if (channels['service.health']) {
     renderServices(channels['service.health']);
+  }
+  if (channels.incidents) {
+    renderIncidents(channels.incidents);
+  }
+  if (channels['control.state']) {
+    renderControlState(channels['control.state']);
+  }
+  if (channels['proposal.queue'] || channels['proposal.reviews']) {
+    renderProposalQueue(channels['proposal.queue'] || latestProposalQueue, channels['proposal.reviews'] || latestProposalReviews);
   }
 }
 
@@ -147,7 +229,7 @@ function renderStrategies(response) {
   elements.strategyRuntimeList.innerHTML = items.length
     ? items.slice(0, 4).map((item) => listRow(item.strategy_id, `${item.decision} / ${formatNumber(item.promotion_score)}`)).join('')
     : '<p class="proposal-empty">No promotion decisions recorded yet.</p>';
-  elements.signalsTabCopy.textContent = items.length ? `${items[0].strategy_id} is ${itemLower(items[0].decision)} with score ${formatNumber(items[0].promotion_score)}.` : 'No strategy runtime view has been projected yet.';
+  elements.signalsTabCopy.textContent = items.length ? `${items[0].strategy_id} is ${items[0].decision.toLowerCase()} with score ${formatNumber(items[0].promotion_score)}.` : 'No strategy runtime view has been projected yet.';
   elements.strategyTabCopy.textContent = items.length ? `${items.length} strategy decisions are available from the promotion gate.` : 'Promotion gate history will appear here once evaluations run.';
 }
 
@@ -190,7 +272,11 @@ function renderPositions(response) {
   elements.contextActionsList.innerHTML = items.length
     ? items.slice(0, 3).map((item) => listRow(item.symbol, `${item.position_side} / entry ${item.entry_price || 'n/a'} / mark ${item.mark_price || 'n/a'}`)).join('')
     : '<p class="proposal-empty">No live positions to act on.</p>';
-  elements.riskBadgeBar.innerHTML = [riskPill('Gross exposure', items.length ? 'active' : 'flat'), riskPill('Stale market data', 'guarded'), riskPill('Safe mode', items.length ? 'watch' : 'clear')].join('');
+  elements.riskBadgeBar.innerHTML = [
+    riskPill('Gross exposure', items.length ? 'active' : 'flat'),
+    riskPill('Stale market data', 'guarded'),
+    riskPill('Safe mode', items.length ? 'watch' : 'clear'),
+  ].join('');
   elements.riskBadge.textContent = items.length ? 'watch' : 'clear';
   elements.riskBadge.className = `badge ${items.length ? 'is-degraded' : 'is-ready'}`;
   elements.contextBadge.textContent = items.length ? 'observed live' : 'idle';
@@ -204,9 +290,99 @@ function renderReconciliation(response) {
 function renderServices(response) {
   const data = response?.data || {};
   const entries = Object.entries(data);
-  elements.incidentBadge.textContent = `${entries.filter(([, value]) => String(value).toLowerCase().includes('unavailable')).length} open`;
-  elements.incidentBadge.className = 'badge section-badge';
-  elements.incidentList.innerHTML = entries.length ? entries.map(([name, value]) => listRow(name, String(value))).join('') : '<p class="proposal-empty">No service health data available.</p>';
+  elements.contextActionsList.innerHTML = entries.length
+    ? entries.slice(0, 3).map(([name, value]) => listRow(`service ${name}`, String(value))).join('')
+    : elements.contextActionsList.innerHTML;
+}
+
+function renderIncidents(response) {
+  const items = Array.isArray(response?.items) ? response.items : (Array.isArray(response?.data) ? response.data : []);
+  elements.incidentBadge.textContent = `${items.length} open`;
+  elements.incidentBadge.className = `badge ${items.length > 0 ? 'is-degraded' : 'section-badge'}`;
+  elements.incidentList.innerHTML = items.length
+    ? items.slice(0, 6).map((item) => incidentRow(item)).join('')
+    : '<p class="proposal-empty">No active incidents or alerts.</p>';
+}
+
+function incidentRow(item) {
+  const title = item.title || item.code || 'Incident';
+  const severity = (item.severity || 'information').toUpperCase();
+  const source = item.source || 'system';
+  const message = item.message || 'No detail provided.';
+  return `<div class="review-history-item"><span>${title}</span><strong>${severity}</strong><small>${source} - ${message}</small></div>`;
+}
+
+function renderProposalQueue(queueResponse, reviewsResponse) {
+  latestProposalQueue = queueResponse;
+  latestProposalReviews = reviewsResponse;
+  const items = Array.isArray(queueResponse?.items) ? queueResponse.items : [];
+  const pendingItems = items.filter((item) => item.status === 'PENDING');
+  const reviews = Array.isArray(reviewsResponse?.items) ? reviewsResponse.items : [];
+  if (!selectedProposalId || !items.some((item) => item.proposal_id === selectedProposalId)) {
+    selectedProposalId = pendingItems[0]?.proposal_id || items[0]?.proposal_id || null;
+  }
+  const selectedProposal = items.find((item) => item.proposal_id === selectedProposalId) || null;
+  const latestReview = selectedProposal ? reviews.find((item) => item.proposal_id === selectedProposal.proposal_id && item.status !== 'CREATED') : null;
+  const recentDecisions = reviews.filter((item) => item.status !== 'CREATED');
+  elements.approvalBadge.textContent = `${pendingItems.length} pending`;
+  elements.approvalBadge.className = `badge ${pendingItems.length > 0 ? 'is-degraded' : 'is-ready'}`;
+  elements.proposalHistoryBadge.textContent = `${recentDecisions.length} items`;
+  elements.proposalHistoryBadge.className = 'badge section-badge';
+  elements.proposalQueueList.innerHTML = items.length
+    ? items.slice(0, 6).map((item) => `
+      <button class="proposal-queue-item${item.proposal_id === selectedProposalId ? ' is-selected' : ''}" type="button" data-proposal-id="${item.proposal_id}">
+        <span>${item.instrument?.symbol || item.proposal_id}</span>
+        <strong>${item.status}</strong>
+      </button>
+    `).join('')
+    : '<p class="proposal-empty">No proposals available for review.</p>';
+  elements.proposalQueueList.querySelectorAll('[data-proposal-id]').forEach((button) => {
+    button.addEventListener('click', () => {
+      selectedProposalId = button.dataset.proposalId;
+      renderProposalQueue(latestProposalQueue, latestProposalReviews);
+    });
+  });
+  elements.proposalHistoryList.innerHTML = recentDecisions.length
+    ? recentDecisions.slice(0, 6).map((item) => reviewHistoryRow(item)).join('')
+    : '<p class="proposal-empty">No review decisions recorded yet.</p>';
+  const reviewDisabled = !selectedProposal || selectedProposal.status !== 'PENDING' || !authToken || !hasPermission('proposal.review');
+  elements.proposalApproveButton.disabled = reviewDisabled;
+  elements.proposalHoldButton.disabled = reviewDisabled;
+  elements.proposalRejectButton.disabled = reviewDisabled;
+  const reviewTitle = !authToken
+    ? 'Sign in to review proposals.'
+    : (!hasPermission('proposal.review') ? 'Missing permission: proposal.review' : 'Ready');
+  elements.proposalApproveButton.title = reviewTitle;
+  elements.proposalHoldButton.title = reviewTitle;
+  elements.proposalRejectButton.title = reviewTitle;
+  if (!selectedProposal) {
+    elements.proposalReviewState.textContent = 'No proposal selected.';
+    return;
+  }
+  const summaryParts = [
+    `${selectedProposal.instrument?.symbol || selectedProposal.proposal_id}`,
+    `strategy ${selectedProposal.strategy_id || 'unknown'}`,
+    `status ${selectedProposal.status}`,
+  ];
+  if (latestReview) {
+    summaryParts.push(`latest review ${latestReview.status.toLowerCase()} by ${latestReview.reviewer || 'system'}`);
+  }
+  elements.proposalReviewState.textContent = summaryParts.join(' - ');
+}
+
+function reviewHistoryRow(item) {
+  const reason = item.reason ? ` - ${item.reason}` : '';
+  return `<div class="review-history-item${item.proposal_id === selectedProposalId ? ' is-selected' : ''}"><span>${item.proposal_id}</span><strong>${item.status}</strong><small>${item.reviewer || 'system'} at ${formatTimestamp(item.occurred_at)}${reason}</small></div>`;
+}
+
+function renderControlState(controlState) {
+  const killSwitch = controlState?.kill_switch || 'NORMAL';
+  elements.killSwitchChip.textContent = killSwitch;
+  elements.killSwitchChip.className = `badge ${badgeClass(killSwitch)}`;
+  const latestAction = Array.isArray(controlState?.recent_actions) ? controlState.recent_actions[0] : null;
+  elements.commandObserved.textContent = latestAction
+    ? `Observed control state: ${latestAction.type} by ${latestAction.actor || 'system'} at ${formatTimestamp(latestAction.occurred_at)} (${latestAction.observed || 'observation pending'}).`
+    : `Observed control state: kill switch ${killSwitch.toLowerCase()}.`;
 }
 
 function setRealtimeState(title, copy) {
@@ -225,6 +401,7 @@ async function fetchJSON(url) {
   if (response.status === 401) {
     clearAuthSession(false);
     updateAuthSessionUI();
+    connectRealtime();
     return null;
   }
   return response.json().catch(() => null);
@@ -245,14 +422,86 @@ async function submitAuthLogin() {
     return;
   }
   authToken = payload.access_token || '';
+  authStepUp = payload?.step_up === true;
+  authPermissions = Array.isArray(payload?.permissions) ? payload.permissions : [];
   localStorage.setItem(authStorageKey, authToken);
   updateAuthSessionUI(payload);
+  await refreshDashboard();
+  connectRealtime();
+}
+
+async function submitAuthStepUp() {
+  if (!authToken) {
+    elements.authSessionDetail.textContent = 'Sign in before requesting step-up authentication.';
+    return;
+  }
+  const password = elements.authPasswordInput.value;
+  if (!password) {
+    elements.authSessionDetail.textContent = 'Re-enter your password to complete step-up authentication.';
+    return;
+  }
+  const response = await fetch('/api/auth-service/auth/step-up', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+    body: JSON.stringify({ password }),
+  }).catch(() => null);
+  const payload = await response?.json().catch(() => null);
+  if (!response || !response.ok) {
+    elements.authSessionDetail.textContent = payload?.error || 'Step-up failed.';
+    return;
+  }
+  authToken = payload.access_token || authToken;
+  authStepUp = payload?.step_up === true;
+  authPermissions = Array.isArray(payload?.permissions) ? payload.permissions : authPermissions;
+  localStorage.setItem(authStorageKey, authToken);
+  elements.authPasswordInput.value = '';
+  updateAuthSessionUI(payload);
+  connectRealtime();
+}
+
+async function submitProposalReview(action) {
+  if (!authToken) {
+    elements.proposalReviewState.textContent = 'Sign in before reviewing proposals.';
+    return;
+  }
+  if (!selectedProposalId) {
+    elements.proposalReviewState.textContent = 'Select a proposal first.';
+    return;
+  }
+  const reason = elements.proposalReasonInput.value.trim();
+  if (action === 'reject' && !reason) {
+    elements.proposalReviewState.textContent = 'Reject requires a reason.';
+    return;
+  }
+  const response = await fetch(`/api/proposal-service/queue/${encodeURIComponent(selectedProposalId)}/${action}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+    body: JSON.stringify({ reason }),
+  }).catch(() => null);
+  const payload = await response?.json().catch(() => null);
+  if (!response || !response.ok) {
+    if (response?.status === 401) {
+      clearAuthSession(false);
+      updateAuthSessionUI();
+    }
+    elements.proposalReviewState.textContent = payload?.error || 'Proposal review failed.';
+    return;
+  }
+  elements.proposalReasonInput.value = '';
+  elements.proposalReviewState.textContent = `Proposal ${payload?.proposal_id || selectedProposalId} marked ${payload?.status || action.toUpperCase()}.`;
   await refreshDashboard();
 }
 
 function clearAuthSession(rerender = true) {
   authToken = '';
+  authStepUp = false;
+  authPermissions = [];
   localStorage.removeItem(authStorageKey);
+  if (realtimeSocket) {
+    realtimeSocket.close();
+    realtimeSocket = null;
+  }
+  setRealtimeState('Realtime locked', 'Sign in to unlock live patches from the realtime gateway.');
   if (rerender) {
     updateAuthSessionUI();
   }
@@ -262,28 +511,97 @@ function updateAuthSessionUI(payload = null) {
   if (!authToken) {
     elements.authSessionState.textContent = 'locked';
     elements.authSessionDetail.textContent = 'Sign in to unlock protected queries.';
+    elements.authPermissionsList.innerHTML = '<p class="proposal-empty">No permissions loaded.</p>';
+    elements.authStepUpButton.disabled = true;
     elements.authLogoutButton.disabled = true;
+    updateActionAvailability();
     return;
   }
-  elements.authSessionState.textContent = payload?.role || 'operator session';
-  elements.authSessionDetail.textContent = payload?.subject ? `${payload.subject} authenticated.` : 'Stored operator session restored.';
+  authStepUp = payload?.step_up === true || authStepUp;
+  authPermissions = Array.isArray(payload?.permissions) ? payload.permissions : authPermissions;
+  elements.authSessionState.textContent = authStepUp ? 'step-up active' : (payload?.role || 'operator session');
+  elements.authSessionDetail.textContent = payload?.subject
+    ? `${payload.subject} authenticated.${authStepUp ? ' Step-up enabled for emergency controls.' : ''}`
+    : `Stored operator session restored.${authStepUp ? ' Step-up enabled for emergency controls.' : ''}`;
+  elements.authPermissionsList.innerHTML = authPermissions.length
+    ? authPermissions.slice(0, 6).map((permission) => listRow('permission', permission)).join('')
+    : '<p class="proposal-empty">No permissions loaded.</p>';
+  elements.authStepUpButton.disabled = false;
   elements.authLogoutButton.disabled = false;
+  updateActionAvailability();
+}
+
+function updateActionAvailability() {
+  document.querySelectorAll('[data-command]').forEach((button) => {
+    const command = button.dataset.command;
+    const permission = requiredPermissionForCommand[command];
+    if (!permission) {
+      return;
+    }
+    if (!authToken) {
+      button.disabled = true;
+      button.title = 'Sign in to view or run governed actions.';
+      return;
+    }
+    if (!hasPermission(permission)) {
+      button.disabled = true;
+      button.title = `Missing permission: ${permission}`;
+      return;
+    }
+    button.disabled = false;
+    button.title = 'Step-up authentication required before submit.';
+  });
+}
+
+function hasPermission(permission) {
+  return authPermissions.includes(permission);
 }
 
 function openCommandDialog(command) {
   commandIntent = command;
+  const supported = supportedControlCommands[command];
   elements.commandDialogTitle.textContent = `Confirm ${command}`;
-  elements.commandDialogBody.textContent = `Desired state: ${command}. Observed state is unchanged until the command API is confirmed and the Query API reports the resulting transition.`;
+  elements.commandDialogBody.textContent = supported
+    ? `Desired state: ${command}. This action is wired to the current control-service intake path and requires step-up authentication. Downstream execution effects can remain delayed or observational.`
+    : `Desired state: ${command}. This command is still planned only, so the console will record intent locally without calling a backend endpoint.`;
   elements.commandReasonInput.value = '';
   elements.commandDialog.showModal();
 }
 
-function handleCommandDialogClose() {
+async function handleCommandDialogClose() {
   if (elements.commandDialog.returnValue !== 'confirm' || !commandIntent) {
     return;
   }
   const reason = elements.commandReasonInput.value.trim() || 'no reason supplied';
-  elements.commandObserved.textContent = `Desired command ${commandIntent} submitted with reason: ${reason}. Observed state remains unchanged until the command path reports completion.`;
+  const supported = supportedControlCommands[commandIntent];
+  if (supported) {
+    if (!authToken) {
+      elements.commandObserved.textContent = 'Sign in before running emergency controls.';
+      commandIntent = null;
+      return;
+    }
+    if (!authStepUp) {
+      elements.commandObserved.textContent = 'Step-up authentication is required before running emergency controls.';
+      commandIntent = null;
+      return;
+    }
+    const response = await fetch(supported.endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+      body: JSON.stringify({ reason }),
+    }).catch(() => null);
+    const payload = await response?.json().catch(() => null);
+    if (!response || !response.ok) {
+      elements.commandObserved.textContent = payload?.error || 'Emergency control request failed.';
+      commandIntent = null;
+      return;
+    }
+    renderControlState(payload?.state);
+    elements.commandObserved.textContent = `Observed control state: ${payload?.action?.type || supported.label} accepted into control-service with reason: ${reason}. Downstream execution effect is still observed separately.`;
+    commandIntent = null;
+    return;
+  }
+  elements.commandObserved.textContent = `Desired command ${commandIntent} recorded with reason: ${reason}. This action is not wired to a live backend path yet.`;
   commandIntent = null;
 }
 
@@ -309,10 +627,17 @@ function badgeClass(state) {
   return 'section-badge';
 }
 
-function itemLower(value) {
-  return String(value || '').toLowerCase();
-}
-
 function formatNumber(value) {
   return typeof value === 'number' ? value.toFixed(2) : 'n/a';
+}
+
+function formatTimestamp(value) {
+  if (!value) {
+    return 'unknown time';
+  }
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return 'unknown time';
+  }
+  return parsed.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
 }
