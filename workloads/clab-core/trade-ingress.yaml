@@ -23,6 +23,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: market-data
+                name: trader-web
                 port:
                   number: 80

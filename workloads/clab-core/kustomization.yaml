@@ -8,4 +8,8 @@ resources:
   - market-data-deployment.yaml
   - strategy-engine-service.yaml
   - strategy-engine-deployment.yaml
+  - trader-web-configmap.yaml
+  - trader-web-nginx-configmap.yaml
+  - trader-web-service.yaml
+  - trader-web-deployment.yaml
   - trade-ingress.yaml

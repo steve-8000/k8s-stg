@@ -1,0 +1,177 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: trader-web-assets
+  namespace: clab-core
+data:
+  index.html: |
+    <!doctype html>
+    <html lang="en">
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>CLAB Trade</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="./styles.css">
+      </head>
+      <body>
+        <div class="backdrop"></div>
+        <main class="shell">
+          <section class="hero">
+            <p class="eyebrow">trade.clab.one</p>
+            <h1>CLAB Trade Control Surface</h1>
+            <p class="lead">
+              Live market ingestion, feature construction, and signal generation are online.
+              Execution remains intentionally blocked until rotated Binance credentials are injected safely.
+            </p>
+            <div class="hero-meta">
+              <span id="timestamp">checking</span>
+              <span class="dot"></span>
+              <span>staging / binance</span>
+            </div>
+          </section>
+          <section class="grid">
+            <article class="card emphasis">
+              <div class="card-header">
+                <span>Deployment state</span>
+                <span class="badge ok">healthy</span>
+              </div>
+              <h2>Pipeline active</h2>
+              <p>
+                `market-data -> feature-pipeline -> strategy-engine` is streaming in-cluster over JetStream.
+              </p>
+            </article>
+            <article class="card">
+              <div class="card-header">
+                <span>Market Data</span>
+                <span class="badge" id="market-data-badge">checking</span>
+              </div>
+              <p id="market-data-status">Waiting for service response.</p>
+            </article>
+            <article class="card">
+              <div class="card-header">
+                <span>Feature Pipeline</span>
+                <span class="badge" id="feature-pipeline-badge">checking</span>
+              </div>
+              <p id="feature-pipeline-status">Waiting for service response.</p>
+            </article>
+            <article class="card">
+              <div class="card-header">
+                <span>Strategy Engine</span>
+                <span class="badge" id="strategy-engine-badge">checking</span>
+              </div>
+              <p id="strategy-engine-status">Waiting for service response.</p>
+            </article>
+            <article class="card wide caution">
+              <div class="card-header">
+                <span>Execution guardrail</span>
+                <span class="badge warn">blocked</span>
+              </div>
+              <h2>Trading stays disabled</h2>
+              <p>
+                The previously shared Binance keys are treated as compromised. Futures order testing remains disabled until
+                rotated credentials are injected through Kubernetes secrets and an execution service with hard trade-count limits exists.
+              </p>
+            </article>
+          </section>
+        </main>
+        <script src="./app.js"></script>
+      </body>
+    </html>
+  styles.css: |
+    :root {
+      --bg: #07111c;
+      --bg-soft: #0c1b2c;
+      --panel: rgba(8, 20, 34, 0.78);
+      --panel-strong: rgba(12, 29, 49, 0.92);
+      --text: #edf4fb;
+      --muted: #9eb3c8;
+      --line: rgba(150, 177, 204, 0.18);
+      --ok: #38d39f;
+      --warn: #ffb44c;
+      --shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Space Grotesk", sans-serif;
+      background: radial-gradient(circle at top left, rgba(29, 145, 255, 0.22), transparent 32%), radial-gradient(circle at bottom right, rgba(56, 211, 159, 0.18), transparent 28%), linear-gradient(160deg, var(--bg), #02070d 72%);
+      color: var(--text);
+    }
+    .backdrop {
+      position: fixed;
+      inset: 0;
+      background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(circle at center, black 42%, transparent 85%);
+      pointer-events: none;
+    }
+    .shell { position: relative; width: min(1120px, calc(100vw - 32px)); margin: 0 auto; padding: 56px 0 72px; }
+    .hero {
+      padding: 32px;
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: linear-gradient(180deg, rgba(13, 30, 50, 0.9), rgba(7, 18, 31, 0.84));
+      box-shadow: var(--shadow);
+    }
+    .eyebrow, .hero-meta, .card-header, .badge { font-family: "IBM Plex Mono", monospace; letter-spacing: 0.04em; }
+    .eyebrow { margin: 0 0 12px; color: #78b9ff; text-transform: uppercase; font-size: 12px; }
+    h1, h2 { margin: 0; line-height: 1; }
+    h1 { font-size: clamp(2.4rem, 6vw, 5rem); max-width: 10ch; }
+    .lead { max-width: 720px; margin: 18px 0 0; color: var(--muted); font-size: 1.02rem; line-height: 1.7; }
+    .hero-meta { display: flex; align-items: center; gap: 12px; margin-top: 24px; color: var(--muted); font-size: 0.8rem; }
+    .dot { width: 6px; height: 6px; border-radius: 999px; background: var(--ok); box-shadow: 0 0 14px var(--ok); }
+    .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; margin-top: 18px; }
+    .card {
+      grid-column: span 4;
+      min-height: 180px;
+      padding: 24px;
+      border-radius: 24px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      backdrop-filter: blur(14px);
+      box-shadow: var(--shadow);
+    }
+    .card.emphasis { grid-column: span 12; background: linear-gradient(180deg, rgba(16, 36, 59, 0.92), rgba(7, 21, 35, 0.9)); }
+    .card.wide { grid-column: span 12; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 0.8rem; text-transform: uppercase; color: var(--muted); }
+    .card p { margin: 18px 0 0; color: var(--muted); line-height: 1.7; }
+    .card h2 { margin-top: 18px; font-size: 1.8rem; }
+    .badge { display: inline-flex; align-items: center; justify-content: center; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--line); font-size: 0.72rem; text-transform: uppercase; }
+    .badge.ok { color: var(--ok); border-color: rgba(56, 211, 159, 0.28); background: rgba(56, 211, 159, 0.12); }
+    .badge.warn { color: var(--warn); border-color: rgba(255, 180, 76, 0.28); background: rgba(255, 180, 76, 0.12); }
+    .caution { background: linear-gradient(180deg, rgba(44, 27, 11, 0.86), rgba(18, 11, 6, 0.9)); }
+    @media (max-width: 880px) {
+      .shell { width: min(100vw - 20px, 1120px); padding-top: 24px; }
+      .hero, .card { padding: 20px; border-radius: 20px; }
+      .card, .card.emphasis, .card.wide { grid-column: span 12; }
+    }
+  app.js: |
+    const services = [
+      { id: 'market-data', label: 'Market Data' },
+      { id: 'feature-pipeline', label: 'Feature Pipeline' },
+      { id: 'strategy-engine', label: 'Strategy Engine' },
+    ];
+    document.getElementById('timestamp').textContent = new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    for (const service of services) { checkService(service); }
+    async function checkService(service) {
+      const badge = document.getElementById(`${service.id}-badge`);
+      const text = document.getElementById(`${service.id}-status`);
+      try {
+        const response = await fetch(`/api/${service.id}/readyz`, { cache: 'no-store' });
+        const payload = await response.json();
+        const status = payload.status || 'unknown';
+        badge.textContent = status;
+        badge.classList.toggle('ok', status === 'ready');
+        badge.classList.toggle('warn', status !== 'ready');
+        const checks = payload.checks ? Object.entries(payload.checks).map(([key, value]) => `${key}: ${value}`).join(' / ') : 'no checks';
+        text.textContent = `${service.label} reports ${status}. ${checks}`;
+      } catch (error) {
+        badge.textContent = 'offline';
+        badge.classList.add('warn');
+        text.textContent = `${service.label} is unreachable from the public edge.`;
+      }
+    }
