@@ -61,12 +61,16 @@ data:
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "targets": [
             {
-              "expr": "node_memory_total_bytes{instance=\"steve-macbook\"} - node_memory_available_bytes{instance=\"steve-macbook\"}",
-              "legendFormat": "Used", "refId": "A"
+              "expr": "node_memory_total_bytes{instance=\"steve-macbook\"} - node_memory_free_bytes{instance=\"steve-macbook\"} - node_memory_inactive_bytes{instance=\"steve-macbook\"}",
+              "legendFormat": "Used (Active+Wired+Compressed)", "refId": "A"
             },
             {
-              "expr": "node_memory_available_bytes{instance=\"steve-macbook\"}",
-              "legendFormat": "Available", "refId": "B"
+              "expr": "node_memory_inactive_bytes{instance=\"steve-macbook\"}",
+              "legendFormat": "Inactive (Reclaimable)", "refId": "B"
+            },
+            {
+              "expr": "node_memory_free_bytes{instance=\"steve-macbook\"}",
+              "legendFormat": "Free", "refId": "C"
             }
           ],
           "fieldConfig": {
@@ -84,7 +88,7 @@ data:
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "targets": [
             {
-              "expr": "100 * (1 - node_memory_available_bytes{instance=\"steve-macbook\"} / node_memory_total_bytes{instance=\"steve-macbook\"})",
+              "expr": "100 * (1 - (node_memory_free_bytes{instance=\"steve-macbook\"} + node_memory_inactive_bytes{instance=\"steve-macbook\"}) / node_memory_total_bytes{instance=\"steve-macbook\"})",
               "legendFormat": "Memory %", "refId": "A"
             }
           ],
@@ -130,7 +134,7 @@ data:
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "targets": [
             {
-              "expr": "100 * (1 - node_memory_SwapFree_bytes{instance=\"steve-macbook\"} / (node_memory_SwapTotal_bytes{instance=\"steve-macbook\"} > 0))",
+              "expr": "100 * node_memory_swap_used_bytes{instance=\"steve-macbook\"} / (node_memory_swap_total_bytes{instance=\"steve-macbook\"} > 0)",
               "legendFormat": "Swap %", "refId": "A"
             }
           ],
