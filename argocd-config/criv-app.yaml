@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: criv
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: workloads
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: workloads
+  source:
+    repoURL: https://github.com/steve-8000/criv-home.git
+    targetRevision: main
+    path: k8s-deploy/criv
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: criv
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 1m
