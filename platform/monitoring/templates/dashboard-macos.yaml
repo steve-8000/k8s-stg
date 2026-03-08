@@ -1,0 +1,372 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-macos
+  labels:
+    grafana_dashboard: "1"
+data:
+  macos-node-gpu.json: |
+    {
+      "uid": "clab-macos-node-gpu",
+      "title": "clab-trade: macOS Node + GPU",
+      "tags": ["clab-trade", "node-exporter", "macos", "gpu"],
+      "timezone": "browser",
+      "refresh": "30s",
+      "time": { "from": "now-1h", "to": "now" },
+      "templating": { "list": [] },
+      "panels": [
+        {
+          "id": 1,
+          "title": "CPU Usage %",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            {
+              "expr": "100 - (avg by(instance) (irate(node_cpu_seconds_total{mode=\"idle\",instance=\"steve-macbook\"}[5m])) * 100)",
+              "legendFormat": "CPU %",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent", "min": 0, "max": 100,
+              "thresholds": { "mode": "absolute", "steps": [
+                { "color": "green", "value": null },
+                { "color": "yellow", "value": 70 },
+                { "color": "red", "value": 90 }
+              ]},
+              "custom": { "fillOpacity": 20, "lineWidth": 2, "spanNulls": true }
+            }
+          }
+        },
+        {
+          "id": 2,
+          "title": "System Load (1m / 5m / 15m)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            { "expr": "node_load1{instance=\"steve-macbook\"}", "legendFormat": "load1", "refId": "A" },
+            { "expr": "node_load5{instance=\"steve-macbook\"}", "legendFormat": "load5", "refId": "B" },
+            { "expr": "node_load15{instance=\"steve-macbook\"}", "legendFormat": "load15", "refId": "C" }
+          ],
+          "fieldConfig": { "defaults": { "custom": { "fillOpacity": 10, "lineWidth": 2 } } }
+        },
+        {
+          "id": 3,
+          "title": "Memory Usage",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            {
+              "expr": "node_memory_total_bytes{instance=\"steve-macbook\"} - node_memory_available_bytes{instance=\"steve-macbook\"}",
+              "legendFormat": "Used", "refId": "A"
+            },
+            {
+              "expr": "node_memory_available_bytes{instance=\"steve-macbook\"}",
+              "legendFormat": "Available", "refId": "B"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes",
+              "custom": { "fillOpacity": 30, "lineWidth": 2, "stacking": { "mode": "normal" } }
+            }
+          }
+        },
+        {
+          "id": 4,
+          "title": "Memory %",
+          "type": "gauge",
+          "gridPos": { "h": 8, "w": 4, "x": 12, "y": 8 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            {
+              "expr": "100 * (1 - node_memory_available_bytes{instance=\"steve-macbook\"} / node_memory_total_bytes{instance=\"steve-macbook\"})",
+              "legendFormat": "Memory %", "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent", "min": 0, "max": 100,
+              "thresholds": { "mode": "absolute", "steps": [
+                { "color": "green", "value": null },
+                { "color": "yellow", "value": 70 },
+                { "color": "red", "value": 90 }
+              ]}
+            }
+          }
+        },
+        {
+          "id": 5,
+          "title": "Disk Usage %",
+          "type": "gauge",
+          "gridPos": { "h": 8, "w": 4, "x": 16, "y": 8 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            {
+              "expr": "100 - (node_filesystem_avail_bytes{instance=\"steve-macbook\",mountpoint=\"/\",fstype!=\"rootfs\"} / node_filesystem_size_bytes{instance=\"steve-macbook\",mountpoint=\"/\",fstype!=\"rootfs\"} * 100)",
+              "legendFormat": "Disk %", "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent", "min": 0, "max": 100,
+              "thresholds": { "mode": "absolute", "steps": [
+                { "color": "green", "value": null },
+                { "color": "yellow", "value": 70 },
+                { "color": "red", "value": 85 }
+              ]}
+            }
+          }
+        },
+        {
+          "id": 6,
+          "title": "Swap %",
+          "type": "gauge",
+          "gridPos": { "h": 8, "w": 4, "x": 20, "y": 8 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            {
+              "expr": "100 * (1 - node_memory_SwapFree_bytes{instance=\"steve-macbook\"} / (node_memory_SwapTotal_bytes{instance=\"steve-macbook\"} > 0))",
+              "legendFormat": "Swap %", "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent", "min": 0, "max": 100,
+              "thresholds": { "mode": "absolute", "steps": [
+                { "color": "green", "value": null },
+                { "color": "yellow", "value": 50 },
+                { "color": "red", "value": 80 }
+              ]}
+            }
+          }
+        },
+        {
+          "id": 7,
+          "title": "GPU Device Utilization %",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 8, "x": 0, "y": 16 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            {
+              "expr": "apple_gpu_device_utilization_percent{instance=\"steve-macbook\"}",
+              "legendFormat": "Device", "refId": "A"
+            },
+            {
+              "expr": "apple_gpu_renderer_utilization_percent{instance=\"steve-macbook\"}",
+              "legendFormat": "Renderer", "refId": "B"
+            },
+            {
+              "expr": "apple_gpu_tiler_utilization_percent{instance=\"steve-macbook\"}",
+              "legendFormat": "Tiler", "refId": "C"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent", "min": 0, "max": 100,
+              "thresholds": { "mode": "absolute", "steps": [
+                { "color": "green", "value": null },
+                { "color": "yellow", "value": 70 },
+                { "color": "red", "value": 90 }
+              ]},
+              "custom": { "fillOpacity": 20, "lineWidth": 2, "spanNulls": true }
+            }
+          }
+        },
+        {
+          "id": 8,
+          "title": "GPU Memory",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 8, "x": 8, "y": 16 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            {
+              "expr": "apple_gpu_memory_in_use_bytes{instance=\"steve-macbook\"}",
+              "legendFormat": "In Use", "refId": "A"
+            },
+            {
+              "expr": "apple_gpu_memory_allocated_bytes{instance=\"steve-macbook\"}",
+              "legendFormat": "Allocated", "refId": "B"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes",
+              "custom": { "fillOpacity": 20, "lineWidth": 2 }
+            }
+          }
+        },
+        {
+          "id": 9,
+          "title": "GPU Overview",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 8, "x": 16, "y": 16 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            {
+              "expr": "apple_gpu_device_utilization_percent{instance=\"steve-macbook\"}",
+              "legendFormat": "GPU Util %", "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent", "min": 0, "max": 100,
+              "thresholds": { "mode": "absolute", "steps": [
+                { "color": "green", "value": null },
+                { "color": "yellow", "value": 70 },
+                { "color": "red", "value": 90 }
+              ]}
+            }
+          },
+          "options": { "colorMode": "background" }
+        },
+        {
+          "id": 10,
+          "title": "GPU Cores / Unified Memory",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 8, "x": 16, "y": 20 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            {
+              "expr": "apple_gpu_cores_total{instance=\"steve-macbook\"}",
+              "legendFormat": "GPU Cores", "refId": "A"
+            },
+            {
+              "expr": "apple_gpu_unified_memory_total_bytes{instance=\"steve-macbook\"}",
+              "legendFormat": "Unified Memory", "refId": "B"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] }
+            },
+            "overrides": [
+              {
+                "matcher": { "id": "byName", "options": "Unified Memory" },
+                "properties": [{ "id": "unit", "value": "bytes" }]
+              }
+            ]
+          },
+          "options": { "colorMode": "background" }
+        },
+        {
+          "id": 11,
+          "title": "Disk I/O",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            {
+              "expr": "irate(node_disk_read_bytes_total{instance=\"steve-macbook\"}[5m])",
+              "legendFormat": "{{ "{{" }}device{{ "}}" }} read", "refId": "A"
+            },
+            {
+              "expr": "irate(node_disk_written_bytes_total{instance=\"steve-macbook\"}[5m])",
+              "legendFormat": "{{ "{{" }}device{{ "}}" }} write", "refId": "B"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": { "unit": "Bps", "custom": { "fillOpacity": 15, "lineWidth": 2 } }
+          }
+        },
+        {
+          "id": 12,
+          "title": "Network Traffic",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            {
+              "expr": "irate(node_network_receive_bytes_total{instance=\"steve-macbook\",device!~\"lo.*|utun.*|bridge.*|awdl.*|llw.*|anpi.*\"}[5m])",
+              "legendFormat": "{{ "{{" }}device{{ "}}" }} rx", "refId": "A"
+            },
+            {
+              "expr": "irate(node_network_transmit_bytes_total{instance=\"steve-macbook\",device!~\"lo.*|utun.*|bridge.*|awdl.*|llw.*|anpi.*\"}[5m])",
+              "legendFormat": "{{ "{{" }}device{{ "}}" }} tx", "refId": "B"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": { "unit": "Bps", "custom": { "fillOpacity": 15, "lineWidth": 2 } }
+          }
+        },
+        {
+          "id": 13,
+          "title": "Uptime",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 6, "x": 0, "y": 32 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            {
+              "expr": "time() - node_boot_time_seconds{instance=\"steve-macbook\"}",
+              "legendFormat": "Uptime", "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "thresholds": { "mode": "absolute", "steps": [
+                { "color": "red", "value": null },
+                { "color": "green", "value": 3600 }
+              ]}
+            }
+          },
+          "options": { "colorMode": "background" }
+        },
+        {
+          "id": 14,
+          "title": "Total RAM",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 6, "x": 6, "y": 32 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            {
+              "expr": "node_memory_total_bytes{instance=\"steve-macbook\"}",
+              "legendFormat": "Total RAM", "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": { "unit": "bytes", "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] } }
+          },
+          "options": { "colorMode": "background" }
+        },
+        {
+          "id": 15,
+          "title": "CPU Cores",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 6, "x": 12, "y": 32 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            {
+              "expr": "count(node_cpu_seconds_total{instance=\"steve-macbook\",mode=\"idle\"})",
+              "legendFormat": "Cores", "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": { "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] } }
+          },
+          "options": { "colorMode": "background" }
+        },
+        {
+          "id": 16,
+          "title": "Root Disk Total",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 6, "x": 18, "y": 32 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            {
+              "expr": "node_filesystem_size_bytes{instance=\"steve-macbook\",mountpoint=\"/\",fstype!=\"rootfs\"}",
+              "legendFormat": "Root Disk", "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": { "unit": "bytes", "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] } }
+          },
+          "options": { "colorMode": "background" }
+        }
+      ],
+      "schemaVersion": 39
+    }

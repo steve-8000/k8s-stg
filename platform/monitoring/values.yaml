@@ -39,6 +39,14 @@ kube-prometheus-stack:
           hosts:
             - prometheus.clab.one
     prometheusSpec:
+      additionalScrapeConfigs:
+        - job_name: "node-exporter-macos"
+          scrape_interval: 30s
+          metrics_path: /metrics
+          static_configs:
+            - targets: ["219.255.103.189:9102"]
+              labels:
+                instance: "steve-macbook"
       retention: 15d
       retentionSize: 10GB
       resources:
