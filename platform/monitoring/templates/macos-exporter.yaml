@@ -23,10 +23,10 @@ metadata:
     app.kubernetes.io/part-of: monitoring
 subsets:
   - addresses:
-      - ip: 219.255.103.189
+      - ip: 219.255.103.226
     ports:
       - name: metrics
-        port: 9102
+        port: 9100
         protocol: TCP
 ---
 apiVersion: monitoring.coreos.com/v1
