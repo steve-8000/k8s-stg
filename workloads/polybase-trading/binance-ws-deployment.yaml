@@ -25,7 +25,7 @@ spec:
       containers:
         - name: binance-ws
           image: ghcr.io/steve-8000/clab-polybase-binance/binance-ws:latest
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           env:
             - name: APP_ENV
               value: prod

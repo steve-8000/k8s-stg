@@ -25,7 +25,7 @@ spec:
       containers:
         - name: state-engine
           image: ghcr.io/steve-8000/clab-polybase-binance/state-engine:latest
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           env:
             - name: APP_ENV
               value: prod

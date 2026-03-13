@@ -25,7 +25,7 @@ spec:
       containers:
         - name: polymarket-discovery
           image: ghcr.io/steve-8000/clab-polybase-binance/polymarket-discovery:latest
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           env:
             - name: APP_ENV
               value: prod
