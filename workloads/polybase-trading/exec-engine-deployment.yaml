@@ -57,22 +57,3 @@ spec:
           ports:
             - name: metrics
               containerPort: 9090
-          readinessProbe:
-            tcpSocket:
-              port: metrics
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          livenessProbe:
-            tcpSocket:
-              port: metrics
-            initialDelaySeconds: 10
-            periodSeconds: 15
-          resources:
-            requests:
-              cpu: 200m
-              memory: 256Mi
-            limits:
-              cpu: "1"
-              memory: 512Mi
-          securityContext:
-            allowPrivilegeEscalation: false
