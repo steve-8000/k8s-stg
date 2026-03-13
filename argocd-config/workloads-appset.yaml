@@ -11,21 +11,21 @@ spec:
     - missingkey=error
   generators:
     - git:
-        repoURL: git@github.com:steve-8000/clab-trade.git
+        repoURL: https://github.com/steve-8000/k8s-stg.git
         revision: main
         directories:
-          - path: k8s-deploy/__disabled__
+          - path: workloads/*
   template:
     metadata:
       name: "{{ .path.basename }}"
       namespace: argocd
       labels:
-        app.kubernetes.io/part-of: workloads
+        app.kubernetes.io/part-of: polybase-binance
         app.kubernetes.io/managed-by: applicationset
     spec:
       project: workloads
       source:
-        repoURL: git@github.com:steve-8000/clab-trade.git
+        repoURL: https://github.com/steve-8000/k8s-stg.git
         targetRevision: main
         path: "{{ .path.path }}"
       destination:

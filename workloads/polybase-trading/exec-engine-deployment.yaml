@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: exec-engine
+  namespace: polybase-trading
+  labels:
+    app.kubernetes.io/name: exec-engine
+    app.kubernetes.io/instance: exec-engine-stg
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: exec-engine
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: exec-engine
+        app.kubernetes.io/instance: exec-engine-stg
+    spec:
+      containers:
+        - name: exec-engine
+          image: ghcr.io/steve-8000/clab-polybase-binance/exec-engine:latest
+          imagePullPolicy: Always
+          env:
+            - name: APP_ENV
+              value: prod
+            - name: APP__NATS__URL
+              value: "nats://nats.polybase-infra.svc.cluster.local:4222"
+            - name: APP__REDIS__URL
+              value: "redis://redis.polybase-infra.svc.cluster.local:6379"
+            - name: APP__CLICKHOUSE__URL
+              value: "http://clickhouse.polybase-infra.svc.cluster.local:8123"
+            - name: APP__CLICKHOUSE__DATABASE
+              value: trading
+            - name: APP__BINANCE__REST_URL
+              value: "https://fapi.binance.com"
+            - name: APP__BINANCE__WS_URL
+              value: "wss://fstream.binance.com"
+            - name: APP__BINANCE__SYMBOL
+              value: BTCUSDT
+            - name: RUST_LOG
+              value: info
+          envFrom:
+            - secretRef:
+                name: binance-api-credentials
+          ports:
+            - name: metrics
+              containerPort: 9090
+          readinessProbe:
+            tcpSocket:
+              port: metrics
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: metrics
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false

@@ -45,8 +45,8 @@ k8s-stg/
 │   └── argocd-ingress/
 │
 └── workloads/                    # ★ 애플리케이션은 여기에 배포
-    ├── nginx/                    # 예시 워크로드 1
-    └── sample-app/               # 예시 워크로드 2
+    ├── polybase-infra/           # NATS, ClickHouse, Redis 인프라
+    └── polybase-trading/         # 8개 트레이딩 서비스
 ```
 
 ---
@@ -327,3 +327,53 @@ rm -rf workloads/<app-name>/
 git add -A && git commit -m "Remove <app-name>" && git push
 # ArgoCD가 자동으로 Application과 모든 리소스를 정리 (prune: true)
 ```
+
+---
+
+## 8. Polybase-Binance 트레이딩 시스템
+
+### 현재 배포된 워크로드
+
+#### polybase-infra (인프라 서비스)
+| 서비스 | 타입 | 스토리지 | 메모리 |
+|--------|------|----------|--------|
+| NATS (JetStream) | StatefulSet | 10Gi PVC | 1Gi |
+| ClickHouse | StatefulSet | 50Gi PVC | 4Gi |
+| Redis | Deployment | - | 256Mi |
+
+#### polybase-trading (트레이딩 서비스)
+| 서비스 | 역할 | 이미지 |
+|--------|------|--------|
+| polymarket-discovery | Gamma API 시장 탐색 | ghcr.io/steve-8000/clab-polybase-binance/polymarket-discovery:latest |
+| polymarket-ws | Polymarket CLOB WebSocket 수집 | ghcr.io/steve-8000/clab-polybase-binance/polymarket-ws:latest |
+| binance-ws | Binance 선물 시장 데이터 수집 | ghcr.io/steve-8000/clab-polybase-binance/binance-ws:latest |
+| state-engine | 통합 상태 + 피처 엔진 | ghcr.io/steve-8000/clab-polybase-binance/state-engine:latest |
+| signal-engine | 전략 시그널 생성 | ghcr.io/steve-8000/clab-polybase-binance/signal-engine:latest |
+| exec-engine | Binance 주문 실행 | ghcr.io/steve-8000/clab-polybase-binance/exec-engine:latest |
+| risk-engine | 리스크 관리 | ghcr.io/steve-8000/clab-polybase-binance/risk-engine:latest |
+| recorder | ClickHouse 데이터 기록 | ghcr.io/steve-8000/clab-polybase-binance/recorder:latest |
+
+### 시크릿 설정 (배포 전 필수)
+
+```bash
+# Binance API 키 시크릿 생성
+kubectl create secret generic binance-api-credentials \
+  -n polybase-trading \
+  --from-literal=APP__BINANCE__API_KEY=<your-api-key> \
+  --from-literal=APP__BINANCE__API_SECRET=<your-api-secret>
+```
+
+### 서비스 간 의존성
+
+```
+polymarket-discovery → polymarket-ws → state-engine → signal-engine → exec-engine
+                                           ↑
+binance-ws ────────────────────────────────┘
+risk-engine: 모든 주문 의도를 감시
+recorder: 모든 NATS 이벤트를 ClickHouse에 기록
+```
+
+### 소스 코드
+
+- 앱 소스: https://github.com/steve-8000/clab-polybase-binance
+- CI/CD: GitHub Actions → GHCR 이미지 빌드 → ArgoCD 자동 배포

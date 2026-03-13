@@ -4,11 +4,10 @@ metadata:
   name: workloads
   namespace: argocd
 spec:
-  description: Application workloads — deployed by dev/ops teams
+  description: Polybase-Binance trading system workloads
   sourceRepos:
     - https://github.com/steve-8000/k8s-stg.git
-    - git@github.com:steve-8000/clab-trade.git
-    - https://github.com/steve-8000/criv-home.git
+    - https://github.com/steve-8000/clab-polybase-binance.git
   destinations:
     - namespace: "*"
       server: https://kubernetes.default.svc

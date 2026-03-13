@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: recorder
+  namespace: polybase-trading
+  labels:
+    app.kubernetes.io/name: recorder
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: recorder
+  ports:
+    - name: metrics
+      port: 9090
+      targetPort: metrics

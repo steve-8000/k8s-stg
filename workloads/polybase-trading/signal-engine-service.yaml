@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: signal-engine
+  namespace: polybase-trading
+  labels:
+    app.kubernetes.io/name: signal-engine
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: signal-engine
+  ports:
+    - name: metrics
+      port: 9090
+      targetPort: metrics
