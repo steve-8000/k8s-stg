@@ -24,3 +24,7 @@ resources:
   # Recording & observability
   - recorder-service.yaml
   - recorder-deployment.yaml
+  # Dashboard
+  - dashboard-api-service.yaml
+  - dashboard-api-deployment.yaml
+  - dashboard-api-ingress.yaml

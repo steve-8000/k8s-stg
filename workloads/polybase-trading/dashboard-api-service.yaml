@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: dashboard-api
+  namespace: polybase-trading
+  labels:
+    app.kubernetes.io/name: dashboard-api
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: dashboard-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
