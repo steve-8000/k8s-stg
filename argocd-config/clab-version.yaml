@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: clab-version
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: workloads
+  source:
+    repoURL: https://github.com/steve-8000/k8s-stg.git
+    targetRevision: main
+    path: workloads/clab-version
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: clab-version
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m

@@ -1,0 +1,539 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: service-version-catalog
+  namespace: clab-version
+  labels:
+    app.kubernetes.io/name: service-version-catalog
+    app.kubernetes.io/part-of: clab-version
+    app.kubernetes.io/managed-by: sync-service-versions
+data:
+  summary.json: |
+    {
+      "catalogRepo": {
+        "path": "/Users/steve/k8s-stg",
+        "branch": "main",
+        "headCommit": "c40aceeb70f30117134fc4486e20690ee5734c5a"
+      },
+      "workloadSource": {
+        "path": "/Users/steve/clab-trade",
+        "branch": "main",
+        "headCommit": "d85ea82e86150dd90e95eea9341d94c8e65a0b0a"
+      },
+      "gitops": {
+        "rootRepo": "https://github.com/steve-8000/k8s-stg.git",
+        "rootPath": "argocd-config",
+        "workloadSourceRepo": "git@github.com:steve-8000/clab-trade.git",
+        "workloadSourcePath": "k8s-deploy/*"
+      },
+      "counts": {
+        "workloads": 45,
+        "argocdApplications": 5
+      }
+    }
+  workloads.json: |
+    [
+      {
+        "name": "auth-service",
+        "namespace": "clab-apps",
+        "kind": "Deployment",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/auth-service",
+        "version": "473789f",
+        "sourcePath": "k8s-deploy/clab-apps/auth-service-deployment.yaml",
+        "gitCommit": "d85ea82e86150dd90e95eea9341d94c8e65a0b0a"
+      },
+      {
+        "name": "control-service",
+        "namespace": "clab-apps",
+        "kind": "Deployment",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/control-service",
+        "version": "023f9b9",
+        "sourcePath": "k8s-deploy/clab-apps/control-service-deployment.yaml",
+        "gitCommit": "9409c1c7be4047ac6fb7999eace1ffee0a867247"
+      },
+      {
+        "name": "notification-service",
+        "namespace": "clab-apps",
+        "kind": "Deployment",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/notification-service",
+        "version": "023f9b9",
+        "sourcePath": "k8s-deploy/clab-apps/notification-service-deployment.yaml",
+        "gitCommit": "9409c1c7be4047ac6fb7999eace1ffee0a867247"
+      },
+      {
+        "name": "ops-console-api",
+        "namespace": "clab-apps",
+        "kind": "Deployment",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/ops-console-api",
+        "version": "023f9b9",
+        "sourcePath": "k8s-deploy/clab-apps/ops-console-api-deployment.yaml",
+        "gitCommit": "9409c1c7be4047ac6fb7999eace1ffee0a867247"
+      },
+      {
+        "name": "user-service",
+        "namespace": "clab-apps",
+        "kind": "Deployment",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/user-service",
+        "version": "023f9b9",
+        "sourcePath": "k8s-deploy/clab-apps/user-service-deployment.yaml",
+        "gitCommit": "9409c1c7be4047ac6fb7999eace1ffee0a867247"
+      },
+      {
+        "name": "ai-inference",
+        "namespace": "clab-core",
+        "kind": "Deployment",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/ai-inference",
+        "version": "paper-fix-1",
+        "sourcePath": "k8s-deploy/clab-core/ai-inference-deployment.yaml",
+        "gitCommit": "33f4c693b9430537485964df8e28cc6723e9a6ba"
+      },
+      {
+        "name": "auth-service",
+        "namespace": "clab-core",
+        "kind": "Deployment",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/auth-service",
+        "version": "473789f",
+        "sourcePath": "k8s-deploy/clab-core/auth-service-deployment.yaml",
+        "gitCommit": "d85ea82e86150dd90e95eea9341d94c8e65a0b0a"
+      },
+      {
+        "name": "backtest-orchestrator",
+        "namespace": "clab-core",
+        "kind": "Deployment",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/backtest-orchestrator",
+        "version": "023f9b9",
+        "sourcePath": "k8s-deploy/clab-core/backtest-orchestrator-deployment.yaml",
+        "gitCommit": "9409c1c7be4047ac6fb7999eace1ffee0a867247"
+      },
+      {
+        "name": "control-service",
+        "namespace": "clab-core",
+        "kind": "Deployment",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/control-service",
+        "version": "6bc2560",
+        "sourcePath": "k8s-deploy/clab-core/control-service-deployment.yaml",
+        "gitCommit": "fff49a47bcaaabcf6eae7cb763ede6db952e882c"
+      },
+      {
+        "name": "execution-router",
+        "namespace": "clab-core",
+        "kind": "Deployment",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/execution-router",
+        "version": "6bc2560",
+        "sourcePath": "k8s-deploy/clab-core/execution-router-deployment.yaml",
+        "gitCommit": "661436e03d712479cab548483e8e7f8e7356df9e"
+      },
+      {
+        "name": "execution-router-paper",
+        "namespace": "clab-core",
+        "kind": "Deployment",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/execution-router",
+        "version": "6bc2560",
+        "sourcePath": "k8s-deploy/clab-core/execution-router-paper-deployment.yaml",
+        "gitCommit": "661436e03d712479cab548483e8e7f8e7356df9e"
+      },
+      {
+        "name": "feature-pipeline",
+        "namespace": "clab-core",
+        "kind": "Deployment",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/feature-pipeline",
+        "version": "6bc2560",
+        "sourcePath": "k8s-deploy/clab-core/feature-pipeline-deployment.yaml",
+        "gitCommit": "fff49a47bcaaabcf6eae7cb763ede6db952e882c"
+      },
+      {
+        "name": "gateway",
+        "namespace": "clab-core",
+        "kind": "Deployment",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/gateway",
+        "version": "023f9b9",
+        "sourcePath": "k8s-deploy/clab-core/gateway-deployment.yaml",
+        "gitCommit": "00e0728d226cba79247b64b08e48a40092d75905"
+      },
+      {
+        "name": "market-data",
+        "namespace": "clab-core",
+        "kind": "Deployment",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/market-data",
+        "version": "6bc2560",
+        "sourcePath": "k8s-deploy/clab-core/market-data-deployment.yaml",
+        "gitCommit": "fff49a47bcaaabcf6eae7cb763ede6db952e882c"
+      },
+      {
+        "name": "notification-service",
+        "namespace": "clab-core",
+        "kind": "Deployment",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/notification-service",
+        "version": "023f9b9",
+        "sourcePath": "k8s-deploy/clab-core/notification-service-deployment.yaml",
+        "gitCommit": "9409c1c7be4047ac6fb7999eace1ffee0a867247"
+      },
+      {
+        "name": "ops-console-api",
+        "namespace": "clab-core",
+        "kind": "Deployment",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/ops-console-api",
+        "version": "023f9b9",
+        "sourcePath": "k8s-deploy/clab-core/ops-console-api-deployment.yaml",
+        "gitCommit": "9409c1c7be4047ac6fb7999eace1ffee0a867247"
+      },
+      {
+        "name": "order-manager",
+        "namespace": "clab-core",
+        "kind": "Deployment",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/order-manager",
+        "version": "3be38df",
+        "sourcePath": "k8s-deploy/clab-core/order-manager-deployment.yaml",
+        "gitCommit": "ab21dae2515256319dd55d795368d47a58b5fde9"
+      },
+      {
+        "name": "order-manager-paper",
+        "namespace": "clab-core",
+        "kind": "Deployment",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/order-manager",
+        "version": "3be38df",
+        "sourcePath": "k8s-deploy/clab-core/order-manager-paper-deployment.yaml",
+        "gitCommit": "ab21dae2515256319dd55d795368d47a58b5fde9"
+      },
+      {
+        "name": "portfolio-canonical-state",
+        "namespace": "clab-core",
+        "kind": "Deployment",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/portfolio-canonical-state",
+        "version": "pcs-fix-2",
+        "sourcePath": "k8s-deploy/clab-core/portfolio-canonical-state-deployment.yaml",
+        "gitCommit": "ab21dae2515256319dd55d795368d47a58b5fde9"
+      },
+      {
+        "name": "portfolio-canonical-state-paper",
+        "namespace": "clab-core",
+        "kind": "Service",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/portfolio-canonical-state",
+        "version": "pcs-fix-2",
+        "sourcePath": "k8s-deploy/clab-core/portfolio-canonical-state-paper-deployment.yaml",
+        "gitCommit": "ab21dae2515256319dd55d795368d47a58b5fde9"
+      },
+      {
+        "name": "portfolio-engine",
+        "namespace": "clab-core",
+        "kind": "Deployment",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/portfolio-engine",
+        "version": "6bc2560",
+        "sourcePath": "k8s-deploy/clab-core/portfolio-engine-deployment.yaml",
+        "gitCommit": "661436e03d712479cab548483e8e7f8e7356df9e"
+      },
+      {
+        "name": "position-sizer",
+        "namespace": "clab-core",
+        "kind": "Deployment",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/position-sizer",
+        "version": "023f9b9",
+        "sourcePath": "k8s-deploy/clab-core/position-sizer-deployment.yaml",
+        "gitCommit": "9409c1c7be4047ac6fb7999eace1ffee0a867247"
+      },
+      {
+        "name": "position-sizer-paper",
+        "namespace": "clab-core",
+        "kind": "Service",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/position-sizer",
+        "version": "latest",
+        "sourcePath": "k8s-deploy/clab-core/position-sizer-paper-deployment.yaml",
+        "gitCommit": "fbdefa77f5d56ebe43adae885924554f5cca1b38"
+      },
+      {
+        "name": "positions-ledger",
+        "namespace": "clab-core",
+        "kind": "Deployment",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/positions-ledger",
+        "version": "473789f",
+        "sourcePath": "k8s-deploy/clab-core/positions-ledger-deployment.yaml",
+        "gitCommit": "d85ea82e86150dd90e95eea9341d94c8e65a0b0a"
+      },
+      {
+        "name": "positions-ledger-paper",
+        "namespace": "clab-core",
+        "kind": "Service",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/positions-ledger",
+        "version": "473789f",
+        "sourcePath": "k8s-deploy/clab-core/positions-ledger-paper-deployment.yaml",
+        "gitCommit": "d85ea82e86150dd90e95eea9341d94c8e65a0b0a"
+      },
+      {
+        "name": "projection-worker",
+        "namespace": "clab-core",
+        "kind": "Deployment",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/projection-worker",
+        "version": "023f9b9",
+        "sourcePath": "k8s-deploy/clab-core/projection-worker-deployment.yaml",
+        "gitCommit": "00e0728d226cba79247b64b08e48a40092d75905"
+      },
+      {
+        "name": "promotion-gate",
+        "namespace": "clab-core",
+        "kind": "Deployment",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/promotion-gate",
+        "version": "15750d5",
+        "sourcePath": "k8s-deploy/clab-core/promotion-gate-deployment.yaml",
+        "gitCommit": "00e0728d226cba79247b64b08e48a40092d75905"
+      },
+      {
+        "name": "proposal-service",
+        "namespace": "clab-core",
+        "kind": "Deployment",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/proposal-service",
+        "version": "paper-fix-1",
+        "sourcePath": "k8s-deploy/clab-core/proposal-service-deployment.yaml",
+        "gitCommit": "33f4c693b9430537485964df8e28cc6723e9a6ba"
+      },
+      {
+        "name": "proposal-service-paper",
+        "namespace": "clab-core",
+        "kind": "Service",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/proposal-service",
+        "version": "paper-fix-1",
+        "sourcePath": "k8s-deploy/clab-core/proposal-service-paper-deployment.yaml",
+        "gitCommit": "33f4c693b9430537485964df8e28cc6723e9a6ba"
+      },
+      {
+        "name": "query-api",
+        "namespace": "clab-core",
+        "kind": "Deployment",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/query-api",
+        "version": "bd81689",
+        "sourcePath": "k8s-deploy/clab-core/query-api-deployment.yaml",
+        "gitCommit": "00e0728d226cba79247b64b08e48a40092d75905"
+      },
+      {
+        "name": "realtime-gateway",
+        "namespace": "clab-core",
+        "kind": "Deployment",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/realtime-gateway",
+        "version": "023f9b9",
+        "sourcePath": "k8s-deploy/clab-core/realtime-gateway-deployment.yaml",
+        "gitCommit": "00e0728d226cba79247b64b08e48a40092d75905"
+      },
+      {
+        "name": "reconciliation",
+        "namespace": "clab-core",
+        "kind": "Deployment",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/reconciliation",
+        "version": "6bc2560",
+        "sourcePath": "k8s-deploy/clab-core/reconciliation-deployment.yaml",
+        "gitCommit": "661436e03d712479cab548483e8e7f8e7356df9e"
+      },
+      {
+        "name": "research-labs",
+        "namespace": "clab-core",
+        "kind": "Deployment",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/research-labs",
+        "version": "023f9b9",
+        "sourcePath": "k8s-deploy/clab-core/research-labs-deployment.yaml",
+        "gitCommit": "00e0728d226cba79247b64b08e48a40092d75905"
+      },
+      {
+        "name": "risk-engine",
+        "namespace": "clab-core",
+        "kind": "Deployment",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/risk-engine",
+        "version": "6bc2560",
+        "sourcePath": "k8s-deploy/clab-core/risk-engine-deployment.yaml",
+        "gitCommit": "661436e03d712479cab548483e8e7f8e7356df9e"
+      },
+      {
+        "name": "risk-engine-paper",
+        "namespace": "clab-core",
+        "kind": "Deployment",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/risk-engine",
+        "version": "6bc2560",
+        "sourcePath": "k8s-deploy/clab-core/risk-engine-paper-deployment.yaml",
+        "gitCommit": "dfa3ef925fe93bd87394bdfd62535c3b92c234fe"
+      },
+      {
+        "name": "strategy-engine",
+        "namespace": "clab-core",
+        "kind": "Deployment",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/strategy-engine",
+        "version": "6bc2560",
+        "sourcePath": "k8s-deploy/clab-core/strategy-engine-deployment.yaml",
+        "gitCommit": "3be38df6aeadecc144a3a037b36f463019e9aa11"
+      },
+      {
+        "name": "strategy-selection",
+        "namespace": "clab-core",
+        "kind": "Deployment",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/strategy-selection",
+        "version": "latest",
+        "sourcePath": "k8s-deploy/clab-core/strategy-selection-deployment.yaml",
+        "gitCommit": "548c804751eae33452a95a1047a83bf9aa05f8dc"
+      },
+      {
+        "name": "trade-planner",
+        "namespace": "clab-core",
+        "kind": "Deployment",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/trade-planner",
+        "version": "15750d5",
+        "sourcePath": "k8s-deploy/clab-core/trade-planner-deployment.yaml",
+        "gitCommit": "cbfbf5b01922211f8edee559f732c02f8137a44b"
+      },
+      {
+        "name": "trader-web",
+        "namespace": "clab-core",
+        "kind": "Deployment",
+        "deployType": "image",
+        "artifact": "nginx",
+        "version": "1.29-alpine",
+        "sourcePath": "k8s-deploy/clab-core/trader-web-deployment.yaml",
+        "gitCommit": "548c804751eae33452a95a1047a83bf9aa05f8dc"
+      },
+      {
+        "name": "user-service",
+        "namespace": "clab-core",
+        "kind": "Deployment",
+        "deployType": "image",
+        "artifact": "ghcr.io/steve-8000/clab-trade/user-service",
+        "version": "023f9b9",
+        "sourcePath": "k8s-deploy/clab-core/user-service-deployment.yaml",
+        "gitCommit": "9409c1c7be4047ac6fb7999eace1ffee0a867247"
+      },
+      {
+        "name": "minio",
+        "namespace": "clab-data",
+        "kind": "Deployment",
+        "deployType": "image",
+        "artifact": "minio/minio",
+        "version": "sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+        "sourcePath": "k8s-deploy/clab-data/minio-deployment.yaml",
+        "gitCommit": "e54e7a293642eea202456cc4cea400c6e88fbb14"
+      },
+      {
+        "name": "postgres",
+        "namespace": "clab-data",
+        "kind": "StatefulSet",
+        "deployType": "image",
+        "artifact": "postgres",
+        "version": "17-alpine",
+        "sourcePath": "k8s-deploy/clab-data/postgres-statefulset.yaml",
+        "gitCommit": "4ccbfe1004ed7a54ec6b635c91227f9747953644"
+      },
+      {
+        "name": "redis",
+        "namespace": "clab-data",
+        "kind": "Deployment",
+        "deployType": "image",
+        "artifact": "redis",
+        "version": "8-alpine",
+        "sourcePath": "k8s-deploy/clab-data/redis-deployment.yaml",
+        "gitCommit": "e54e7a293642eea202456cc4cea400c6e88fbb14"
+      },
+      {
+        "name": "timescaledb",
+        "namespace": "clab-data",
+        "kind": "StatefulSet",
+        "deployType": "image",
+        "artifact": "timescale/timescaledb",
+        "version": "2.22.1-pg17",
+        "sourcePath": "k8s-deploy/clab-data/timescaledb-statefulset.yaml",
+        "gitCommit": "4ccbfe1004ed7a54ec6b635c91227f9747953644"
+      },
+      {
+        "name": "nats",
+        "namespace": "clab-system",
+        "kind": "StatefulSet",
+        "deployType": "image",
+        "artifact": "nats",
+        "version": "2.12-alpine",
+        "sourcePath": "k8s-deploy/clab-system/nats-statefulset.yaml",
+        "gitCommit": "4ccbfe1004ed7a54ec6b635c91227f9747953644"
+      }
+    ]
+  argocd-apps.json: |
+    [
+      {
+        "name": "argocd-ingress",
+        "namespace": "argocd",
+        "kind": "Application",
+        "deployType": "kustomize",
+        "artifact": "argocd-ingress",
+        "version": "",
+        "sourcePath": "platform/argocd-ingress",
+        "gitCommit": "a74b320c1d7f531487d1ff754af3f8f6b54e0808"
+      },
+      {
+        "name": "cert-manager",
+        "namespace": "cert-manager",
+        "kind": "Application",
+        "deployType": "helm",
+        "artifact": "cert-manager",
+        "version": "v1.19.4",
+        "sourcePath": "platform/cert-manager",
+        "gitCommit": "a74b320c1d7f531487d1ff754af3f8f6b54e0808"
+      },
+      {
+        "name": "cert-manager-resources",
+        "namespace": "cert-manager",
+        "kind": "Application",
+        "deployType": "kustomize",
+        "artifact": "cert-manager-resources",
+        "version": "",
+        "sourcePath": "platform/cert-manager-resources",
+        "gitCommit": "a74b320c1d7f531487d1ff754af3f8f6b54e0808"
+      },
+      {
+        "name": "ingress-nginx",
+        "namespace": "ingress-nginx",
+        "kind": "Application",
+        "deployType": "helm",
+        "artifact": "ingress-nginx",
+        "version": "4.14.3",
+        "sourcePath": "platform/ingress-nginx",
+        "gitCommit": "a74b320c1d7f531487d1ff754af3f8f6b54e0808"
+      },
+      {
+        "name": "monitoring",
+        "namespace": "monitoring",
+        "kind": "Application",
+        "deployType": "helm",
+        "artifact": "kube-prometheus-stack",
+        "version": "82.10.1",
+        "sourcePath": "platform/monitoring",
+        "gitCommit": "a74b320c1d7f531487d1ff754af3f8f6b54e0808"
+      }
+    ]
