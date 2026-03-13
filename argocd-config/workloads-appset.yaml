@@ -14,7 +14,7 @@ spec:
         repoURL: git@github.com:steve-8000/clab-trade.git
         revision: main
         directories:
-          - path: k8s-deploy/*
+          - path: k8s-deploy/__disabled__
   template:
     metadata:
       name: "{{ .path.basename }}"
