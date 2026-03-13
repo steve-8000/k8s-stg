@@ -51,7 +51,9 @@ spec:
       path: /metrics
       honorLabels: true
       relabelings:
-        - targetLabel: job
+        - action: replace
+          targetLabel: job
           replacement: node-exporter-macos
-        - targetLabel: instance
+        - action: replace
+          targetLabel: instance
           replacement: steve-macbook
