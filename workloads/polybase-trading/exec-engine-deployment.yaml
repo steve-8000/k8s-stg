@@ -43,11 +43,17 @@ spec:
               value: "wss://fstream.binance.com"
             - name: APP__BINANCE__SYMBOL
               value: BTCUSDT
+            - name: APP__BINANCE__PAPER_TRADING
+              value: "true"
+            - name: APP__BINANCE__INITIAL_BALANCE
+              value: "100.0"
+            - name: APP__BINANCE__MAX_LEVERAGE
+              value: "5"
             - name: RUST_LOG
               value: info
-          envFrom:
-            - secretRef:
-                name: binance-api-credentials
+          # envFrom:
+          #   - secretRef:
+          #       name: binance-api-credentials  # Enable when switching to live trading
           ports:
             - name: metrics
               containerPort: 9090
