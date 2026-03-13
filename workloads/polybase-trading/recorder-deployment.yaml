@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
         - name: recorder
-          image: ghcr.io/steve-8000/clab-polybase-binance/recorder:latest
+          image: ghcr.io/steve-8000/clab-polybase-binance/recorder:v1773436109
           imagePullPolicy: IfNotPresent
           env:
             - name: APP_ENV

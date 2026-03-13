@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
         - name: polymarket-ws
-          image: ghcr.io/steve-8000/clab-polybase-binance/polymarket-ws:latest
+          image: ghcr.io/steve-8000/clab-polybase-binance/polymarket-ws:v1773437875
           imagePullPolicy: IfNotPresent
           env:
             - name: APP_ENV
