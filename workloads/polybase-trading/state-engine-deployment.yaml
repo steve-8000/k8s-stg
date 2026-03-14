@@ -39,6 +39,16 @@ spec:
               value: trading
             - name: RUST_LOG
               value: info
+            - name: PRICE_DB_PATH
+              value: /data/prices.db
           ports:
             - name: metrics
               containerPort: 9090
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          hostPath:
+            path: /opt/polybase-trading/state-engine-data
+            type: DirectoryOrCreate
