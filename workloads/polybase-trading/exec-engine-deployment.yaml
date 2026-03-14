@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
         - name: exec-engine
-          image: ghcr.io/steve-8000/clab-polybase-binance/exec-engine:v1773436109
+          image: ghcr.io/steve-8000/clab-polybase-binance/exec-engine:v1773474070
           imagePullPolicy: IfNotPresent
           env:
             - name: APP_ENV
@@ -42,13 +42,13 @@ spec:
             - name: APP__BINANCE__WS_URL
               value: "wss://fstream.binance.com"
             - name: APP__BINANCE__SYMBOL
-              value: BTCUSDT
+              value: ETHUSDT
             - name: APP__BINANCE__PAPER_TRADING
               value: "true"
             - name: APP__BINANCE__INITIAL_BALANCE
-              value: "100.0"
+              value: "500.0"
             - name: APP__BINANCE__MAX_LEVERAGE
-              value: "5"
+              value: "10"
             - name: RUST_LOG
               value: info
           # envFrom:

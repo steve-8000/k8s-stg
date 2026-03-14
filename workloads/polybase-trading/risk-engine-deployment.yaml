@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
         - name: risk-engine
-          image: ghcr.io/steve-8000/clab-polybase-binance/risk-engine:v1773436109
+          image: ghcr.io/steve-8000/clab-polybase-binance/risk-engine:v1773474070
           imagePullPolicy: IfNotPresent
           env:
             - name: APP_ENV
