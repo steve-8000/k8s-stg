@@ -39,6 +39,16 @@ spec:
               value: trading
             - name: RUST_LOG
               value: info
+            - name: ORDERS_DB_PATH
+              value: /data/orders.db
           ports:
             - name: http
               containerPort: 3000
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          hostPath:
+            path: /opt/polybase-trading/dashboard-data
+            type: DirectoryOrCreate
