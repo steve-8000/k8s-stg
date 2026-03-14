@@ -27,4 +27,4 @@ resources:
   # Dashboard
   - dashboard-api-service.yaml
   - dashboard-api-deployment.yaml
-  - dashboard-api-ingress.yaml
+  # - dashboard-api-ingress.yaml  # trade.clab.one moved to alice-trade
