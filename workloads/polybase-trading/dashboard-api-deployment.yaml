@@ -43,6 +43,9 @@ spec:
               value: /data/orders.db
             - name: OPTIMIZER_DB_PATH
               value: /optimizer-data/optimizer.db
+          envFrom:
+            - secretRef:
+                name: binance-credentials
           ports:
             - name: http
               containerPort: 3000
