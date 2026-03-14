@@ -58,15 +58,19 @@ spec:
               mountPath: /app/data/sessions
             - name: brain
               mountPath: /app/data/brain
+            - name: trading
+              mountPath: /app/data/trading
+            - name: news
+              mountPath: /app/data/news
             - name: logs
               mountPath: /app/logs
           securityContext:
             allowPrivilegeEscalation: false
       volumes:
         - name: config
-          secret:
-            secretName: alice-trade-config
-            optional: true
+          hostPath:
+            path: /opt/alice-trade/config
+            type: DirectoryOrCreate
         - name: sessions
           hostPath:
             path: /opt/alice-trade/sessions
@@ -74,6 +78,14 @@ spec:
         - name: brain
           hostPath:
             path: /opt/alice-trade/brain
+            type: DirectoryOrCreate
+        - name: trading
+          hostPath:
+            path: /opt/alice-trade/trading
+            type: DirectoryOrCreate
+        - name: news
+          hostPath:
+            path: /opt/alice-trade/news
             type: DirectoryOrCreate
         - name: logs
           hostPath:
