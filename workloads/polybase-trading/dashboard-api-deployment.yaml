@@ -41,14 +41,22 @@ spec:
               value: info
             - name: ORDERS_DB_PATH
               value: /data/orders.db
+            - name: OPTIMIZER_DB_PATH
+              value: /optimizer-data/optimizer.db
           ports:
             - name: http
               containerPort: 3000
           volumeMounts:
             - name: data
               mountPath: /data
+            - name: optimizer-data
+              mountPath: /optimizer-data
       volumes:
         - name: data
           hostPath:
             path: /opt/polybase-trading/dashboard-data
+            type: DirectoryOrCreate
+        - name: optimizer-data
+          hostPath:
+            path: /opt/polybase-trading/optimizer-data
             type: DirectoryOrCreate
