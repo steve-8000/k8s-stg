@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
         - name: dashboard-api
-          image: ghcr.io/steve-8000/clab-polybase-binance/dashboard-api:v1773525813
+          image: ghcr.io/steve-8000/clab-polybase-binance/dashboard-api:v1773526145
           imagePullPolicy: IfNotPresent
           env:
             - name: APP_ENV
