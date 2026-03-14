@@ -60,6 +60,16 @@ kube-prometheus-stack:
       podMonitorSelectorNilUsesHelmValues: false
       ruleSelectorNilUsesHelmValues: false
 
+  ## K3s: disable components that don't expose metrics
+  kubeProxy:
+    enabled: false
+  kubeEtcd:
+    enabled: false
+  kubeScheduler:
+    enabled: false
+  kubeControllerManager:
+    enabled: false
+
   ## Alertmanager
   alertmanager:
     alertmanagerSpec:
