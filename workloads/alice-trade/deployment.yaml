@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
         - name: alice-trade
-          image: docker.io/library/alice-trade:v5
+          image: docker.io/library/alice-trade:v6
           imagePullPolicy: Never
           ports:
             - name: http
