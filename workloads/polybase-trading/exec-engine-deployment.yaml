@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
         - name: exec-engine
-          image: ghcr.io/steve-8000/clab-polybase-binance/exec-engine:v1773474070
+          image: ghcr.io/steve-8000/clab-polybase-binance/exec-engine:v1773480606
           imagePullPolicy: IfNotPresent
           env:
             - name: APP_ENV
