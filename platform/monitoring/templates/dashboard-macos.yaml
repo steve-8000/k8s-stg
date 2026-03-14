@@ -1,19 +1,35 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: grafana-dashboard-macos
+  name: grafana-dashboard-node-monitor
   labels:
     grafana_dashboard: "1"
 data:
-  macos-node-gpu.json: |
+  node-monitor.json: |
     {
-      "uid": "clab-macos-node-gpu",
-      "title": "clab-trade: macOS Node + GPU",
-      "tags": ["clab-trade", "node-exporter", "macos", "gpu"],
+      "uid": "clab-node-monitor",
+      "title": "clab-trade: Node System Monitor",
+      "tags": ["clab-trade", "node-exporter", "unified"],
       "timezone": "browser",
       "refresh": "30s",
       "time": { "from": "now-1h", "to": "now" },
-      "templating": { "list": [] },
+      "templating": {
+        "list": [
+          {
+            "name": "hostname",
+            "label": "Server",
+            "type": "query",
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "query": "label_values(node_uname_info, hostname)",
+            "current": { "text": "All", "value": "$__all" },
+            "includeAll": true,
+            "allValue": ".*",
+            "multi": false,
+            "refresh": 2,
+            "sort": 1
+          }
+        ]
+      },
       "panels": [
         {
           "id": 1,
@@ -23,8 +39,8 @@ data:
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "targets": [
             {
-              "expr": "100 - (avg by(instance) (irate(node_cpu_seconds_total{mode=\"idle\",instance=\"steve-macbook\"}[5m])) * 100)",
-              "legendFormat": "CPU %",
+              "expr": "100 - (avg by(hostname) (irate(node_cpu_seconds_total{mode=\"idle\",hostname=~\"$hostname\"}[5m])) * 100)",
+              "legendFormat": "{{ \"{{\" }}hostname{{ \"}}\" }}",
               "refId": "A"
             }
           ],
@@ -47,9 +63,9 @@ data:
           "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "targets": [
-            { "expr": "node_load1{instance=\"steve-macbook\"}", "legendFormat": "load1", "refId": "A" },
-            { "expr": "node_load5{instance=\"steve-macbook\"}", "legendFormat": "load5", "refId": "B" },
-            { "expr": "node_load15{instance=\"steve-macbook\"}", "legendFormat": "load15", "refId": "C" }
+            { "expr": "node_load1{hostname=~\"$hostname\"}", "legendFormat": "{{ \"{{\" }}hostname{{ \"}}\" }} load1", "refId": "A" },
+            { "expr": "node_load5{hostname=~\"$hostname\"}", "legendFormat": "{{ \"{{\" }}hostname{{ \"}}\" }} load5", "refId": "B" },
+            { "expr": "node_load15{hostname=~\"$hostname\"}", "legendFormat": "{{ \"{{\" }}hostname{{ \"}}\" }} load15", "refId": "C" }
           ],
           "fieldConfig": { "defaults": { "custom": { "fillOpacity": 10, "lineWidth": 2 } } }
         },
@@ -61,16 +77,12 @@ data:
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "targets": [
             {
-              "expr": "node_memory_total_bytes{instance=\"steve-macbook\"} - node_memory_free_bytes{instance=\"steve-macbook\"} - node_memory_inactive_bytes{instance=\"steve-macbook\"}",
-              "legendFormat": "Used (Active+Wired+Compressed)", "refId": "A"
+              "expr": "(node_memory_MemTotal_bytes{hostname=~\"$hostname\"} - node_memory_MemAvailable_bytes{hostname=~\"$hostname\"}) or (node_memory_total_bytes{hostname=~\"$hostname\"} - node_memory_free_bytes{hostname=~\"$hostname\"} - node_memory_inactive_bytes{hostname=~\"$hostname\"})",
+              "legendFormat": "{{ \"{{\" }}hostname{{ \"}}\" }} Used", "refId": "A"
             },
             {
-              "expr": "node_memory_inactive_bytes{instance=\"steve-macbook\"}",
-              "legendFormat": "Inactive (Reclaimable)", "refId": "B"
-            },
-            {
-              "expr": "node_memory_free_bytes{instance=\"steve-macbook\"}",
-              "legendFormat": "Free", "refId": "C"
+              "expr": "node_memory_MemAvailable_bytes{hostname=~\"$hostname\"} or (node_memory_free_bytes{hostname=~\"$hostname\"} + node_memory_inactive_bytes{hostname=~\"$hostname\"})",
+              "legendFormat": "{{ \"{{\" }}hostname{{ \"}}\" }} Available", "refId": "B"
             }
           ],
           "fieldConfig": {
@@ -88,8 +100,8 @@ data:
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "targets": [
             {
-              "expr": "100 * (1 - (node_memory_free_bytes{instance=\"steve-macbook\"} + node_memory_inactive_bytes{instance=\"steve-macbook\"}) / node_memory_total_bytes{instance=\"steve-macbook\"})",
-              "legendFormat": "Memory %", "refId": "A"
+              "expr": "(100 * (1 - node_memory_MemAvailable_bytes{hostname=~\"$hostname\"} / node_memory_MemTotal_bytes{hostname=~\"$hostname\"})) or (100 * (1 - (node_memory_free_bytes{hostname=~\"$hostname\"} + node_memory_inactive_bytes{hostname=~\"$hostname\"}) / node_memory_total_bytes{hostname=~\"$hostname\"}))",
+              "legendFormat": "{{ \"{{\" }}hostname{{ \"}}\" }}", "refId": "A"
             }
           ],
           "fieldConfig": {
@@ -111,8 +123,8 @@ data:
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "targets": [
             {
-              "expr": "100 - (node_filesystem_avail_bytes{instance=\"steve-macbook\",mountpoint=\"/\",fstype!=\"rootfs\"} / node_filesystem_size_bytes{instance=\"steve-macbook\",mountpoint=\"/\",fstype!=\"rootfs\"} * 100)",
-              "legendFormat": "Disk %", "refId": "A"
+              "expr": "100 - (node_filesystem_avail_bytes{hostname=~\"$hostname\",mountpoint=\"/\",fstype!~\"rootfs|tmpfs\"} / node_filesystem_size_bytes{hostname=~\"$hostname\",mountpoint=\"/\",fstype!~\"rootfs|tmpfs\"} * 100)",
+              "legendFormat": "{{ \"{{\" }}hostname{{ \"}}\" }}", "refId": "A"
             }
           ],
           "fieldConfig": {
@@ -134,8 +146,8 @@ data:
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "targets": [
             {
-              "expr": "100 * node_memory_swap_used_bytes{instance=\"steve-macbook\"} / (node_memory_swap_total_bytes{instance=\"steve-macbook\"} > 0)",
-              "legendFormat": "Swap %", "refId": "A"
+              "expr": "(100 * (1 - node_memory_SwapFree_bytes{hostname=~\"$hostname\"} / node_memory_SwapTotal_bytes{hostname=~\"$hostname\"})) or (100 * node_memory_swap_used_bytes{hostname=~\"$hostname\"} / (node_memory_swap_total_bytes{hostname=~\"$hostname\"} > 0))",
+              "legendFormat": "{{ \"{{\" }}hostname{{ \"}}\" }}", "refId": "A"
             }
           ],
           "fieldConfig": {
@@ -151,21 +163,21 @@ data:
         },
         {
           "id": 7,
-          "title": "GPU Device Utilization %",
+          "title": "GPU Device Utilization % (Mac only)",
           "type": "timeseries",
           "gridPos": { "h": 8, "w": 8, "x": 0, "y": 16 },
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "targets": [
             {
-              "expr": "apple_gpu_device_utilization_percent{instance=\"steve-macbook\"}",
+              "expr": "apple_gpu_device_utilization_percent{hostname=~\"$hostname\"}",
               "legendFormat": "Device", "refId": "A"
             },
             {
-              "expr": "apple_gpu_renderer_utilization_percent{instance=\"steve-macbook\"}",
+              "expr": "apple_gpu_renderer_utilization_percent{hostname=~\"$hostname\"}",
               "legendFormat": "Renderer", "refId": "B"
             },
             {
-              "expr": "apple_gpu_tiler_utilization_percent{instance=\"steve-macbook\"}",
+              "expr": "apple_gpu_tiler_utilization_percent{hostname=~\"$hostname\"}",
               "legendFormat": "Tiler", "refId": "C"
             }
           ],
@@ -183,17 +195,17 @@ data:
         },
         {
           "id": 8,
-          "title": "GPU Memory",
+          "title": "GPU Memory (Mac only)",
           "type": "timeseries",
           "gridPos": { "h": 8, "w": 8, "x": 8, "y": 16 },
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "targets": [
             {
-              "expr": "apple_gpu_memory_in_use_bytes{instance=\"steve-macbook\"}",
+              "expr": "apple_gpu_memory_in_use_bytes{hostname=~\"$hostname\"}",
               "legendFormat": "In Use", "refId": "A"
             },
             {
-              "expr": "apple_gpu_memory_allocated_bytes{instance=\"steve-macbook\"}",
+              "expr": "apple_gpu_memory_allocated_bytes{hostname=~\"$hostname\"}",
               "legendFormat": "Allocated", "refId": "B"
             }
           ],
@@ -206,13 +218,13 @@ data:
         },
         {
           "id": 9,
-          "title": "GPU Overview",
+          "title": "GPU Overview (Mac only)",
           "type": "stat",
           "gridPos": { "h": 4, "w": 8, "x": 16, "y": 16 },
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "targets": [
             {
-              "expr": "apple_gpu_device_utilization_percent{instance=\"steve-macbook\"}",
+              "expr": "apple_gpu_device_utilization_percent{hostname=~\"$hostname\"}",
               "legendFormat": "GPU Util %", "refId": "A"
             }
           ],
@@ -230,17 +242,17 @@ data:
         },
         {
           "id": 10,
-          "title": "GPU Cores / Unified Memory",
+          "title": "GPU Cores / Unified Memory (Mac only)",
           "type": "stat",
           "gridPos": { "h": 4, "w": 8, "x": 16, "y": 20 },
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "targets": [
             {
-              "expr": "apple_gpu_cores_total{instance=\"steve-macbook\"}",
+              "expr": "apple_gpu_cores_total{hostname=~\"$hostname\"}",
               "legendFormat": "GPU Cores", "refId": "A"
             },
             {
-              "expr": "apple_gpu_unified_memory_total_bytes{instance=\"steve-macbook\"}",
+              "expr": "apple_gpu_unified_memory_total_bytes{hostname=~\"$hostname\"}",
               "legendFormat": "Unified Memory", "refId": "B"
             }
           ],
@@ -265,12 +277,12 @@ data:
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "targets": [
             {
-              "expr": "irate(node_disk_read_bytes_total{instance=\"steve-macbook\"}[5m])",
-              "legendFormat": "{{ "{{" }}device{{ "}}" }} read", "refId": "A"
+              "expr": "irate(node_disk_read_bytes_total{hostname=~\"$hostname\"}[5m])",
+              "legendFormat": "{{ \"{{\" }}hostname{{ \"}}\" }} {{ \"{{\" }}device{{ \"}}\" }} read", "refId": "A"
             },
             {
-              "expr": "irate(node_disk_written_bytes_total{instance=\"steve-macbook\"}[5m])",
-              "legendFormat": "{{ "{{" }}device{{ "}}" }} write", "refId": "B"
+              "expr": "irate(node_disk_written_bytes_total{hostname=~\"$hostname\"}[5m])",
+              "legendFormat": "{{ \"{{\" }}hostname{{ \"}}\" }} {{ \"{{\" }}device{{ \"}}\" }} write", "refId": "B"
             }
           ],
           "fieldConfig": {
@@ -285,12 +297,12 @@ data:
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "targets": [
             {
-              "expr": "irate(node_network_receive_bytes_total{instance=\"steve-macbook\",device!~\"lo.*|utun.*|bridge.*|awdl.*|llw.*|anpi.*\"}[5m])",
-              "legendFormat": "{{ "{{" }}device{{ "}}" }} rx", "refId": "A"
+              "expr": "irate(node_network_receive_bytes_total{hostname=~\"$hostname\",device!~\"lo|utun.*|bridge.*|awdl.*|llw.*|anpi.*|veth.*|cni.*|flannel.*\"}[5m])",
+              "legendFormat": "{{ \"{{\" }}hostname{{ \"}}\" }} {{ \"{{\" }}device{{ \"}}\" }} rx", "refId": "A"
             },
             {
-              "expr": "irate(node_network_transmit_bytes_total{instance=\"steve-macbook\",device!~\"lo.*|utun.*|bridge.*|awdl.*|llw.*|anpi.*\"}[5m])",
-              "legendFormat": "{{ "{{" }}device{{ "}}" }} tx", "refId": "B"
+              "expr": "irate(node_network_transmit_bytes_total{hostname=~\"$hostname\",device!~\"lo|utun.*|bridge.*|awdl.*|llw.*|anpi.*|veth.*|cni.*|flannel.*\"}[5m])",
+              "legendFormat": "{{ \"{{\" }}hostname{{ \"}}\" }} {{ \"{{\" }}device{{ \"}}\" }} tx", "refId": "B"
             }
           ],
           "fieldConfig": {
@@ -305,8 +317,8 @@ data:
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "targets": [
             {
-              "expr": "time() - node_boot_time_seconds{instance=\"steve-macbook\"}",
-              "legendFormat": "Uptime", "refId": "A"
+              "expr": "time() - node_boot_time_seconds{hostname=~\"$hostname\"}",
+              "legendFormat": "{{ \"{{\" }}hostname{{ \"}}\" }}", "refId": "A"
             }
           ],
           "fieldConfig": {
@@ -328,8 +340,8 @@ data:
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "targets": [
             {
-              "expr": "node_memory_total_bytes{instance=\"steve-macbook\"}",
-              "legendFormat": "Total RAM", "refId": "A"
+              "expr": "node_memory_MemTotal_bytes{hostname=~\"$hostname\"} or node_memory_total_bytes{hostname=~\"$hostname\"}",
+              "legendFormat": "{{ \"{{\" }}hostname{{ \"}}\" }}", "refId": "A"
             }
           ],
           "fieldConfig": {
@@ -345,8 +357,8 @@ data:
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "targets": [
             {
-              "expr": "count(node_cpu_seconds_total{instance=\"steve-macbook\",mode=\"idle\"})",
-              "legendFormat": "Cores", "refId": "A"
+              "expr": "count by(hostname) (node_cpu_seconds_total{hostname=~\"$hostname\",mode=\"idle\"})",
+              "legendFormat": "{{ \"{{\" }}hostname{{ \"}}\" }}", "refId": "A"
             }
           ],
           "fieldConfig": {
@@ -362,8 +374,8 @@ data:
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "targets": [
             {
-              "expr": "node_filesystem_size_bytes{instance=\"steve-macbook\",mountpoint=\"/\",fstype!=\"rootfs\"}",
-              "legendFormat": "Root Disk", "refId": "A"
+              "expr": "node_filesystem_size_bytes{hostname=~\"$hostname\",mountpoint=\"/\",fstype!~\"rootfs|tmpfs\"}",
+              "legendFormat": "{{ \"{{\" }}hostname{{ \"}}\" }}", "refId": "A"
             }
           ],
           "fieldConfig": {

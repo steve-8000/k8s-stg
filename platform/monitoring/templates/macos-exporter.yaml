@@ -17,3 +17,6 @@ spec:
         - 219.255.103.226:9100
       labels:
         instance: steve-macbook
+        hostname: Mac-M4M
+        os: darwin
+        node_role: workstation

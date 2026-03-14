@@ -75,6 +75,15 @@ kube-prometheus-stack:
   nodeExporter:
     enabled: true
   prometheus-node-exporter:
+    prometheus:
+      monitor:
+        relabelings:
+          - targetLabel: hostname
+            replacement: K8S-Server
+          - targetLabel: os
+            replacement: linux
+          - targetLabel: node_role
+            replacement: server
     resources:
       requests:
         cpu: 10m
