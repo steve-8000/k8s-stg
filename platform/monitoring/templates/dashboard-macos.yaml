@@ -40,7 +40,7 @@ data:
           "targets": [
             {
               "expr": "100 - (avg by(hostname) (irate(node_cpu_seconds_total{mode=\"idle\",hostname=~\"$hostname\"}[5m])) * 100)",
-              "legendFormat": "{{ \"{{\" }}hostname{{ \"}}\" }}",
+              "legendFormat": "{{ "{{" }}hostname{{ "}}" }}",
               "refId": "A"
             }
           ],
@@ -63,9 +63,9 @@ data:
           "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "targets": [
-            { "expr": "node_load1{hostname=~\"$hostname\"}", "legendFormat": "{{ \"{{\" }}hostname{{ \"}}\" }} load1", "refId": "A" },
-            { "expr": "node_load5{hostname=~\"$hostname\"}", "legendFormat": "{{ \"{{\" }}hostname{{ \"}}\" }} load5", "refId": "B" },
-            { "expr": "node_load15{hostname=~\"$hostname\"}", "legendFormat": "{{ \"{{\" }}hostname{{ \"}}\" }} load15", "refId": "C" }
+            { "expr": "node_load1{hostname=~\"$hostname\"}", "legendFormat": "{{ "{{" }}hostname{{ "}}" }} load1", "refId": "A" },
+            { "expr": "node_load5{hostname=~\"$hostname\"}", "legendFormat": "{{ "{{" }}hostname{{ "}}" }} load5", "refId": "B" },
+            { "expr": "node_load15{hostname=~\"$hostname\"}", "legendFormat": "{{ "{{" }}hostname{{ "}}" }} load15", "refId": "C" }
           ],
           "fieldConfig": { "defaults": { "custom": { "fillOpacity": 10, "lineWidth": 2 } } }
         },
@@ -78,11 +78,11 @@ data:
           "targets": [
             {
               "expr": "(node_memory_MemTotal_bytes{hostname=~\"$hostname\"} - node_memory_MemAvailable_bytes{hostname=~\"$hostname\"}) or (node_memory_total_bytes{hostname=~\"$hostname\"} - node_memory_free_bytes{hostname=~\"$hostname\"} - node_memory_inactive_bytes{hostname=~\"$hostname\"})",
-              "legendFormat": "{{ \"{{\" }}hostname{{ \"}}\" }} Used", "refId": "A"
+              "legendFormat": "{{ "{{" }}hostname{{ "}}" }} Used", "refId": "A"
             },
             {
               "expr": "node_memory_MemAvailable_bytes{hostname=~\"$hostname\"} or (node_memory_free_bytes{hostname=~\"$hostname\"} + node_memory_inactive_bytes{hostname=~\"$hostname\"})",
-              "legendFormat": "{{ \"{{\" }}hostname{{ \"}}\" }} Available", "refId": "B"
+              "legendFormat": "{{ "{{" }}hostname{{ "}}" }} Available", "refId": "B"
             }
           ],
           "fieldConfig": {
@@ -101,7 +101,7 @@ data:
           "targets": [
             {
               "expr": "(100 * (1 - node_memory_MemAvailable_bytes{hostname=~\"$hostname\"} / node_memory_MemTotal_bytes{hostname=~\"$hostname\"})) or (100 * (1 - (node_memory_free_bytes{hostname=~\"$hostname\"} + node_memory_inactive_bytes{hostname=~\"$hostname\"}) / node_memory_total_bytes{hostname=~\"$hostname\"}))",
-              "legendFormat": "{{ \"{{\" }}hostname{{ \"}}\" }}", "refId": "A"
+              "legendFormat": "{{ "{{" }}hostname{{ "}}" }}", "refId": "A"
             }
           ],
           "fieldConfig": {
@@ -124,7 +124,7 @@ data:
           "targets": [
             {
               "expr": "100 - (node_filesystem_avail_bytes{hostname=~\"$hostname\",mountpoint=\"/\",fstype!~\"rootfs|tmpfs\"} / node_filesystem_size_bytes{hostname=~\"$hostname\",mountpoint=\"/\",fstype!~\"rootfs|tmpfs\"} * 100)",
-              "legendFormat": "{{ \"{{\" }}hostname{{ \"}}\" }}", "refId": "A"
+              "legendFormat": "{{ "{{" }}hostname{{ "}}" }}", "refId": "A"
             }
           ],
           "fieldConfig": {
@@ -147,7 +147,7 @@ data:
           "targets": [
             {
               "expr": "(100 * (1 - node_memory_SwapFree_bytes{hostname=~\"$hostname\"} / node_memory_SwapTotal_bytes{hostname=~\"$hostname\"})) or (100 * node_memory_swap_used_bytes{hostname=~\"$hostname\"} / (node_memory_swap_total_bytes{hostname=~\"$hostname\"} > 0))",
-              "legendFormat": "{{ \"{{\" }}hostname{{ \"}}\" }}", "refId": "A"
+              "legendFormat": "{{ "{{" }}hostname{{ "}}" }}", "refId": "A"
             }
           ],
           "fieldConfig": {
@@ -278,11 +278,11 @@ data:
           "targets": [
             {
               "expr": "irate(node_disk_read_bytes_total{hostname=~\"$hostname\"}[5m])",
-              "legendFormat": "{{ \"{{\" }}hostname{{ \"}}\" }} {{ \"{{\" }}device{{ \"}}\" }} read", "refId": "A"
+              "legendFormat": "{{ "{{" }}hostname{{ "}}" }} {{ "{{" }}device{{ "}}" }} read", "refId": "A"
             },
             {
               "expr": "irate(node_disk_written_bytes_total{hostname=~\"$hostname\"}[5m])",
-              "legendFormat": "{{ \"{{\" }}hostname{{ \"}}\" }} {{ \"{{\" }}device{{ \"}}\" }} write", "refId": "B"
+              "legendFormat": "{{ "{{" }}hostname{{ "}}" }} {{ "{{" }}device{{ "}}" }} write", "refId": "B"
             }
           ],
           "fieldConfig": {
@@ -298,11 +298,11 @@ data:
           "targets": [
             {
               "expr": "irate(node_network_receive_bytes_total{hostname=~\"$hostname\",device!~\"lo|utun.*|bridge.*|awdl.*|llw.*|anpi.*|veth.*|cni.*|flannel.*\"}[5m])",
-              "legendFormat": "{{ \"{{\" }}hostname{{ \"}}\" }} {{ \"{{\" }}device{{ \"}}\" }} rx", "refId": "A"
+              "legendFormat": "{{ "{{" }}hostname{{ "}}" }} {{ "{{" }}device{{ "}}" }} rx", "refId": "A"
             },
             {
               "expr": "irate(node_network_transmit_bytes_total{hostname=~\"$hostname\",device!~\"lo|utun.*|bridge.*|awdl.*|llw.*|anpi.*|veth.*|cni.*|flannel.*\"}[5m])",
-              "legendFormat": "{{ \"{{\" }}hostname{{ \"}}\" }} {{ \"{{\" }}device{{ \"}}\" }} tx", "refId": "B"
+              "legendFormat": "{{ "{{" }}hostname{{ "}}" }} {{ "{{" }}device{{ "}}" }} tx", "refId": "B"
             }
           ],
           "fieldConfig": {
@@ -318,7 +318,7 @@ data:
           "targets": [
             {
               "expr": "time() - node_boot_time_seconds{hostname=~\"$hostname\"}",
-              "legendFormat": "{{ \"{{\" }}hostname{{ \"}}\" }}", "refId": "A"
+              "legendFormat": "{{ "{{" }}hostname{{ "}}" }}", "refId": "A"
             }
           ],
           "fieldConfig": {
@@ -341,7 +341,7 @@ data:
           "targets": [
             {
               "expr": "node_memory_MemTotal_bytes{hostname=~\"$hostname\"} or node_memory_total_bytes{hostname=~\"$hostname\"}",
-              "legendFormat": "{{ \"{{\" }}hostname{{ \"}}\" }}", "refId": "A"
+              "legendFormat": "{{ "{{" }}hostname{{ "}}" }}", "refId": "A"
             }
           ],
           "fieldConfig": {
@@ -358,7 +358,7 @@ data:
           "targets": [
             {
               "expr": "count by(hostname) (node_cpu_seconds_total{hostname=~\"$hostname\",mode=\"idle\"})",
-              "legendFormat": "{{ \"{{\" }}hostname{{ \"}}\" }}", "refId": "A"
+              "legendFormat": "{{ "{{" }}hostname{{ "}}" }}", "refId": "A"
             }
           ],
           "fieldConfig": {
@@ -375,7 +375,7 @@ data:
           "targets": [
             {
               "expr": "node_filesystem_size_bytes{hostname=~\"$hostname\",mountpoint=\"/\",fstype!~\"rootfs|tmpfs\"}",
-              "legendFormat": "{{ \"{{\" }}hostname{{ \"}}\" }}", "refId": "A"
+              "legendFormat": "{{ "{{" }}hostname{{ "}}" }}", "refId": "A"
             }
           ],
           "fieldConfig": {
