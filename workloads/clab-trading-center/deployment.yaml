@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
         - name: clab-trading-center
-          image: docker.io/library/clab-trading-center:v7
+          image: docker.io/library/clab-trading-center:v8
           imagePullPolicy: Never
           ports:
             - name: http
