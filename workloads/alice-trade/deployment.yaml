@@ -43,11 +43,11 @@ spec:
             periodSeconds: 30
           resources:
             requests:
-              cpu: 200m
-              memory: 1Gi
-            limits:
               cpu: "2"
               memory: 4Gi
+            limits:
+              cpu: "20"
+              memory: 48Gi
           env:
             - name: NODE_ENV
               value: production
