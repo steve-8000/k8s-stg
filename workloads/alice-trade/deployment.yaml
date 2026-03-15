@@ -64,6 +64,8 @@ spec:
               mountPath: /app/data/news
             - name: market-data
               mountPath: /app/data/market-data
+            - name: strategy
+              mountPath: /app/data/strategy
             - name: logs
               mountPath: /app/logs
           securityContext:
@@ -92,6 +94,10 @@ spec:
         - name: market-data
           hostPath:
             path: /opt/alice-trade/market-data
+            type: DirectoryOrCreate
+        - name: strategy
+          hostPath:
+            path: /opt/alice-trade/strategy
             type: DirectoryOrCreate
         - name: logs
           hostPath:
