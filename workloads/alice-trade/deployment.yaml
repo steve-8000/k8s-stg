@@ -68,6 +68,8 @@ spec:
               mountPath: /app/data/strategy
             - name: auth
               mountPath: /app/data/auth
+            - name: cron
+              mountPath: /app/data/cron
             - name: logs
               mountPath: /app/logs
           securityContext:
@@ -104,6 +106,10 @@ spec:
         - name: auth
           hostPath:
             path: /opt/alice-trade/auth
+            type: DirectoryOrCreate
+        - name: cron
+          hostPath:
+            path: /opt/alice-trade/cron
             type: DirectoryOrCreate
         - name: logs
           hostPath:
