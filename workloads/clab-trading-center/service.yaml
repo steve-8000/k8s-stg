@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: clab-trading-center
+  namespace: clab-trading-center
+  labels:
+    app.kubernetes.io/name: clab-trading-center
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: clab-trading-center
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
