@@ -60,8 +60,10 @@ spec:
               mountPath: /app/data/brain
             - name: trading
               mountPath: /app/data/trading
-            - name: news
-              mountPath: /app/data/news
+            - name: event-log
+              mountPath: /app/data/event-log
+            - name: media
+              mountPath: /app/data/media
             - name: market-data
               mountPath: /app/data/market-data
             - name: strategy
@@ -91,9 +93,13 @@ spec:
           hostPath:
             path: /opt/alice-trade/trading
             type: DirectoryOrCreate
-        - name: news
+        - name: event-log
           hostPath:
-            path: /opt/alice-trade/news
+            path: /opt/alice-trade/event-log
+            type: DirectoryOrCreate
+        - name: media
+          hostPath:
+            path: /opt/alice-trade/media
             type: DirectoryOrCreate
         - name: market-data
           hostPath:
