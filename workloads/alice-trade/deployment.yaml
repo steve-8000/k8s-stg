@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
         - name: alice-trade
-          image: docker.io/library/alice-trade:v8
+          image: docker.io/library/alice-trade:v9
           imagePullPolicy: Never
           ports:
             - name: http
@@ -62,6 +62,8 @@ spec:
               mountPath: /app/data/trading
             - name: news
               mountPath: /app/data/news
+            - name: market-data
+              mountPath: /app/data/market-data
             - name: logs
               mountPath: /app/logs
           securityContext:
@@ -86,6 +88,10 @@ spec:
         - name: news
           hostPath:
             path: /opt/alice-trade/news
+            type: DirectoryOrCreate
+        - name: market-data
+          hostPath:
+            path: /opt/alice-trade/market-data
             type: DirectoryOrCreate
         - name: logs
           hostPath:
