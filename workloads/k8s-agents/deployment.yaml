@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8s-agents-apiserver
+  namespace: k8s-agents
+  labels:
+    app: k8s-agents-apiserver
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: k8s-agents-apiserver
+  template:
+    metadata:
+      labels:
+        app: k8s-agents-apiserver
+    spec:
+      containers:
+        - name: apiserver
+          image: k8sagents/apiserver:v0.1.0
+          imagePullPolicy: Never
+          ports:
+            - name: http
+              containerPort: 8080
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          env:
+            - name: CONFIG_PATH
+              value: /etc/k8sagents/config.yaml
