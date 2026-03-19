@@ -29,6 +29,12 @@ spec:
           ports:
             - name: http
               containerPort: 3000
+          envFrom:
+            - secretRef:
+                name: valops-env
+          env:
+            - name: NODE_ENV
+              value: production
           readinessProbe:
             httpGet:
               path: /
@@ -52,8 +58,5 @@ spec:
             limits:
               cpu: 500m
               memory: 512Mi
-          env:
-            - name: NODE_ENV
-              value: production
           securityContext:
             allowPrivilegeEscalation: false
