@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: polyhybrid-dashboard
+  namespace: poly-rust
+  labels:
+    app.kubernetes.io/name: polyhybrid-dashboard
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: polyhybrid-dashboard
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: polyhybrid-dashboard
+        app.kubernetes.io/instance: polyhybrid-dashboard-stg
+    spec:
+      containers:
+        - name: dashboard
+          image: poly-rust/dashboard:v0.1.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: RUST_LOG
+              value: info
+          ports:
+            - name: http
+              containerPort: 3456
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false

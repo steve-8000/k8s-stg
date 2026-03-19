@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: polyhybrid-dashboard
+  namespace: poly-rust
+  labels:
+    app.kubernetes.io/name: polyhybrid-dashboard
+spec:
+  selector:
+    app.kubernetes.io/name: polyhybrid-dashboard
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
