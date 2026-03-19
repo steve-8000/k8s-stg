@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: apiserver
-          image: k8sagents/apiserver:v0.1.0
+          image: k8sagents/apiserver:v0.1.1
           imagePullPolicy: Never
           ports:
             - name: http
