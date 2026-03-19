@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: valops-dashboard
+  namespace: valops-dashboard
+  labels:
+    app.kubernetes.io/name: valops-dashboard
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: valops-dashboard
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
