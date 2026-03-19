@@ -22,7 +22,7 @@ spec:
       containers:
         - name: dashboard
           image: docker.io/poly-rust/dashboard:v0.1.0
-          imagePullPolicy: Never
+          imagePullPolicy: IfNotPresent
           env:
             - name: RUST_LOG
               value: info
