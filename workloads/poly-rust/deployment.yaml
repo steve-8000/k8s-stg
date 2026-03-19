@@ -22,7 +22,7 @@ spec:
       containers:
         - name: dashboard
           image: poly-rust/dashboard:v0.1.0
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Never
           env:
             - name: RUST_LOG
               value: info
