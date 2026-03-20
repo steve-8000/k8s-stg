@@ -17,7 +17,6 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: polyhybrid-dashboard
-        app.kubernetes.io/instance: polyhybrid-dashboard-stg
     spec:
       containers:
         - name: dashboard
@@ -25,9 +24,9 @@ spec:
           imagePullPolicy: Never
           env:
             - name: RUST_LOG
+              value: info
             - name: PAPER_MODE
               value: "true"
-              value: info
           ports:
             - name: http
               containerPort: 3456
