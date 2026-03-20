@@ -5,3 +5,6 @@ loki-stack:
     enabled: true
   grafana:
     enabled: false
+    sidecar:
+      datasources:
+        enabled: false
