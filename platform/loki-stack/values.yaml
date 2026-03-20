@@ -1,0 +1,4 @@
+loki-stack:
+  loki.enabled: true
+  promtail.enabled: true
+  grafana.enabled: false

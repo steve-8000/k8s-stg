@@ -1,0 +1,9 @@
+apiVersion: v2
+name: loki-stack
+description: "Log aggregation — Loki + Promtail — managed by K8sAgents Bootstrap"
+version: 1.0.0
+type: application
+dependencies:
+  - name: loki-stack
+    version: "2.10.2"
+    repository: "https://grafana.github.io/helm-charts"
