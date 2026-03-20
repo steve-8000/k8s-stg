@@ -1,6 +1,7 @@
 loki-stack:
   loki:
     enabled: true
+    isDefault: false
   promtail:
     enabled: true
   grafana:
@@ -8,3 +9,5 @@ loki-stack:
     sidecar:
       datasources:
         enabled: false
+  test_pod:
+    enabled: false
