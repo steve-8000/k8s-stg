@@ -10,11 +10,23 @@ metadata:
   name: k8s-agents
 rules:
   - apiGroups: [""]
-    resources: ["pods", "pods/log", "services", "endpoints", "events", "nodes", "namespaces"]
-    verbs: ["get", "list", "watch", "delete"]
+    resources: ["pods", "pods/log", "services", "endpoints", "events", "nodes", "namespaces", "persistentvolumeclaims", "limitranges", "resourcequotas"]
+    verbs: ["get", "list", "watch", "create", "delete", "patch"]
   - apiGroups: ["apps"]
     resources: ["deployments", "replicasets", "statefulsets"]
     verbs: ["get", "list", "watch", "update", "patch"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses", "networkpolicies"]
+    verbs: ["get", "list", "watch", "create"]
+  - apiGroups: ["cert-manager.io"]
+    resources: ["certificates"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["metrics.k8s.io"]
+    resources: ["nodes", "pods"]
+    verbs: ["get", "list"]
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources: ["clusterroles", "clusterrolebindings", "roles", "rolebindings"]
+    verbs: ["get", "list", "watch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
