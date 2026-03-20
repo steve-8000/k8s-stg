@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: dashboard
-          image: docker.io/poly-rust/dashboard:v1.4.1
+          image: docker.io/poly-rust/dashboard:v1.4.2
           imagePullPolicy: Never
           env:
             - name: RUST_LOG
