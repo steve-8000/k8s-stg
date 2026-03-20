@@ -6,7 +6,7 @@ metadata:
   labels:
     app.kubernetes.io/name: polyhybrid-dashboard
 spec:
-  replicas: 1
+  replicas: 0
   revisionHistoryLimit: 3
   selector:
     matchLabels:
