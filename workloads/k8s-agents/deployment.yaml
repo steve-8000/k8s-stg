@@ -16,7 +16,7 @@ spec:
       serviceAccountName: k8s-agents
       containers:
         - name: apiserver
-          image: k8sagents/apiserver:v0.9.0
+          image: k8sagents/apiserver:v1.0.0
           imagePullPolicy: Never
           ports:
             - name: http
