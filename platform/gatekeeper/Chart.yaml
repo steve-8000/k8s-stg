@@ -1,0 +1,9 @@
+apiVersion: v2
+name: gatekeeper
+description: "Policy enforcement — OPA admission controller — managed by K8sAgents Bootstrap"
+version: 1.0.0
+type: application
+dependencies:
+  - name: gatekeeper
+    version: "3.22.0"
+    repository: "https://open-policy-agent.github.io/gatekeeper/charts"

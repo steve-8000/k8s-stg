@@ -1,0 +1,3 @@
+gatekeeper:
+  auditInterval: 60
+  replicas: 1
