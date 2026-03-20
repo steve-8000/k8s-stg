@@ -1,0 +1,2 @@
+falco:
+  driver.kind: modern_ebpf

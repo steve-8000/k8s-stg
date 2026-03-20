@@ -1,0 +1,9 @@
+apiVersion: v2
+name: falco
+description: "Runtime security — eBPF kernel event detection — managed by K8sAgents Bootstrap"
+version: 1.0.0
+type: application
+dependencies:
+  - name: falco
+    version: "4.25.1"
+    repository: "https://falcosecurity.github.io/charts"
