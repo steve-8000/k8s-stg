@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
         - name: valops-dashboard
-          image: docker.io/library/valops-dashboard:v9
+          image: docker.io/library/valops-dashboard:v10
           imagePullPolicy: Never
           ports:
             - name: http
