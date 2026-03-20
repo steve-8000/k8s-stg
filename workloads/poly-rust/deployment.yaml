@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: dashboard
-          image: docker.io/poly-rust/dashboard:v1.5.1
+          image: docker.io/poly-rust/dashboard:v1.5.2
           imagePullPolicy: Never
           env:
             - name: RUST_LOG
@@ -30,6 +30,9 @@ spec:
           ports:
             - name: http
               containerPort: 3456
+          volumeMounts:
+            - name: data
+              mountPath: /data
           readinessProbe:
             httpGet:
               path: /
@@ -51,3 +54,7 @@ spec:
               memory: 256Mi
           securityContext:
             allowPrivilegeEscalation: false
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: polyhybrid-data
