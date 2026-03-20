@@ -10,11 +10,14 @@ metadata:
   name: k8s-agents
 rules:
   - apiGroups: [""]
-    resources: ["pods", "pods/log", "services", "endpoints", "events", "nodes", "namespaces", "persistentvolumeclaims", "limitranges", "resourcequotas"]
+    resources: ["pods", "pods/log", "services", "endpoints", "events", "nodes", "namespaces", "persistentvolumeclaims", "limitranges", "resourcequotas", "secrets", "configmaps", "serviceaccounts"]
     verbs: ["get", "list", "watch", "create", "delete", "patch"]
   - apiGroups: ["apps"]
-    resources: ["deployments", "replicasets", "statefulsets"]
+    resources: ["deployments", "replicasets", "statefulsets", "daemonsets"]
     verbs: ["get", "list", "watch", "update", "patch"]
+  - apiGroups: ["batch"]
+    resources: ["jobs", "cronjobs"]
+    verbs: ["get", "list", "watch", "create", "delete"]
   - apiGroups: ["networking.k8s.io"]
     resources: ["ingresses", "networkpolicies"]
     verbs: ["get", "list", "watch", "create"]
@@ -26,6 +29,9 @@ rules:
     verbs: ["get", "list"]
   - apiGroups: ["rbac.authorization.k8s.io"]
     resources: ["clusterroles", "clusterrolebindings", "roles", "rolebindings"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["snapshot.storage.k8s.io"]
+    resources: ["volumesnapshots"]
     verbs: ["get", "list", "watch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
