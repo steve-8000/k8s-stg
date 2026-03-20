@@ -4,7 +4,7 @@ metadata:
   name: k8s-agents-apiserver
   namespace: k8s-agents
 spec:
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels:
       app: k8s-agents-apiserver
