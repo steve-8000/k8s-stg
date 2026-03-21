@@ -1,0 +1,395 @@
+# --- API Gateway ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: clab-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+        - name: api-gateway
+          image: clab/api-gateway:v1
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 4000
+          env:
+            - name: PORT
+              value: "4000"
+          envFrom:
+            - configMapRef:
+                name: clab-env
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 4000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: clab-platform
+spec:
+  selector:
+    app: api-gateway
+  ports:
+    - port: 4000
+      targetPort: 4000
+---
+# --- Mission Service ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mission-service
+  namespace: clab-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mission-service
+  template:
+    metadata:
+      labels:
+        app: mission-service
+    spec:
+      containers:
+        - name: mission-service
+          image: clab/mission-service:v1
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 4001
+          env:
+            - name: PORT
+              value: "4001"
+          envFrom:
+            - configMapRef:
+                name: clab-env
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 4001
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mission-service
+  namespace: clab-platform
+spec:
+  selector:
+    app: mission-service
+  ports:
+    - port: 4001
+      targetPort: 4001
+---
+# --- Runtime Manager ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: runtime-manager
+  namespace: clab-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: runtime-manager
+  template:
+    metadata:
+      labels:
+        app: runtime-manager
+    spec:
+      containers:
+        - name: runtime-manager
+          image: clab/runtime-manager:v1
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 4002
+          env:
+            - name: PORT
+              value: "4002"
+          envFrom:
+            - configMapRef:
+                name: clab-env
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: runtime-manager
+  namespace: clab-platform
+spec:
+  selector:
+    app: runtime-manager
+  ports:
+    - port: 4002
+      targetPort: 4002
+---
+# --- Worker Codex ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker-codex
+  namespace: clab-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: worker-codex
+  template:
+    metadata:
+      labels:
+        app: worker-codex
+    spec:
+      containers:
+        - name: worker-codex
+          image: clab/worker-codex:v1
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 4003
+          env:
+            - name: PORT
+              value: "4003"
+          envFrom:
+            - configMapRef:
+                name: clab-env
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: worker-codex
+  namespace: clab-platform
+spec:
+  selector:
+    app: worker-codex
+  ports:
+    - port: 4003
+      targetPort: 4003
+---
+# --- Worker Claude ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker-claude
+  namespace: clab-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: worker-claude
+  template:
+    metadata:
+      labels:
+        app: worker-claude
+    spec:
+      containers:
+        - name: worker-claude
+          image: clab/worker-claude:v1
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 4004
+          env:
+            - name: PORT
+              value: "4004"
+          envFrom:
+            - configMapRef:
+                name: clab-env
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: worker-claude
+  namespace: clab-platform
+spec:
+  selector:
+    app: worker-claude
+  ports:
+    - port: 4004
+      targetPort: 4004
+---
+# --- Browser Service ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: browser-service
+  namespace: clab-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: browser-service
+  template:
+    metadata:
+      labels:
+        app: browser-service
+    spec:
+      containers:
+        - name: browser-service
+          image: clab/browser-service:v1
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 4005
+          env:
+            - name: PORT
+              value: "4005"
+          envFrom:
+            - configMapRef:
+                name: clab-env
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: browser-service
+  namespace: clab-platform
+spec:
+  selector:
+    app: browser-service
+  ports:
+    - port: 4005
+      targetPort: 4005
+---
+# --- Review Service ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: review-service
+  namespace: clab-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: review-service
+  template:
+    metadata:
+      labels:
+        app: review-service
+    spec:
+      containers:
+        - name: review-service
+          image: clab/review-service:v1
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 4006
+          env:
+            - name: PORT
+              value: "4006"
+          envFrom:
+            - configMapRef:
+                name: clab-env
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: review-service
+  namespace: clab-platform
+spec:
+  selector:
+    app: review-service
+  ports:
+    - port: 4006
+      targetPort: 4006
+---
+# --- Knowledge Service ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: knowledge-service
+  namespace: clab-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: knowledge-service
+  template:
+    metadata:
+      labels:
+        app: knowledge-service
+    spec:
+      containers:
+        - name: knowledge-service
+          image: clab/knowledge-service:v1
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 4007
+          env:
+            - name: PORT
+              value: "4007"
+          envFrom:
+            - configMapRef:
+                name: clab-env
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: knowledge-service
+  namespace: clab-platform
+spec:
+  selector:
+    app: knowledge-service
+  ports:
+    - port: 4007
+      targetPort: 4007
