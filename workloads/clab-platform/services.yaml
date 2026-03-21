@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: api-gateway
-          image: docker.io/clab/api-gateway:v2
+          image: docker.io/clab/api-gateway:v1
           imagePullPolicy: Never
           ports:
             - containerPort: 4000
