@@ -16,8 +16,8 @@ spec:
     spec:
       containers:
         - name: api-gateway
-          image: clab/api-gateway:v1
-          imagePullPolicy: IfNotPresent
+          image: docker.io/clab/api-gateway:v1
+          imagePullPolicy: Never
           ports:
             - containerPort: 4000
           env:
@@ -70,8 +70,8 @@ spec:
     spec:
       containers:
         - name: mission-service
-          image: clab/mission-service:v1
-          imagePullPolicy: IfNotPresent
+          image: docker.io/clab/mission-service:v1
+          imagePullPolicy: Never
           ports:
             - containerPort: 4001
           env:
@@ -124,8 +124,8 @@ spec:
     spec:
       containers:
         - name: runtime-manager
-          image: clab/runtime-manager:v1
-          imagePullPolicy: IfNotPresent
+          image: docker.io/clab/runtime-manager:v1
+          imagePullPolicy: Never
           ports:
             - containerPort: 4002
           env:
@@ -172,8 +172,8 @@ spec:
     spec:
       containers:
         - name: worker-codex
-          image: clab/worker-codex:v1
-          imagePullPolicy: IfNotPresent
+          image: docker.io/clab/worker-codex:v1
+          imagePullPolicy: Never
           ports:
             - containerPort: 4003
           env:
@@ -220,8 +220,8 @@ spec:
     spec:
       containers:
         - name: worker-claude
-          image: clab/worker-claude:v1
-          imagePullPolicy: IfNotPresent
+          image: docker.io/clab/worker-claude:v1
+          imagePullPolicy: Never
           ports:
             - containerPort: 4004
           env:
@@ -268,8 +268,8 @@ spec:
     spec:
       containers:
         - name: browser-service
-          image: clab/browser-service:v1
-          imagePullPolicy: IfNotPresent
+          image: docker.io/clab/browser-service:v1
+          imagePullPolicy: Never
           ports:
             - containerPort: 4005
           env:
@@ -316,8 +316,8 @@ spec:
     spec:
       containers:
         - name: review-service
-          image: clab/review-service:v1
-          imagePullPolicy: IfNotPresent
+          image: docker.io/clab/review-service:v1
+          imagePullPolicy: Never
           ports:
             - containerPort: 4006
           env:
@@ -364,8 +364,8 @@ spec:
     spec:
       containers:
         - name: knowledge-service
-          image: clab/knowledge-service:v1
-          imagePullPolicy: IfNotPresent
+          image: docker.io/clab/knowledge-service:v1
+          imagePullPolicy: Never
           ports:
             - containerPort: 4007
           env:
