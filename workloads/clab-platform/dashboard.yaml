@@ -16,7 +16,7 @@ spec:
       containers:
         - name: dashboard
           image: clab/dashboard:v1
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Never
           ports:
             - containerPort: 3000
           env:
