@@ -8,3 +8,4 @@ data:
   NATS_URL: "nats://nats:4222"
   NODE_ENV: "production"
   LOG_LEVEL: "info"
+  EXECUTION_MODE: "local"
