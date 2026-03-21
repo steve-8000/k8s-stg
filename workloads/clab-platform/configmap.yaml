@@ -9,3 +9,4 @@ data:
   NODE_ENV: "production"
   LOG_LEVEL: "info"
   EXECUTION_MODE: "local"
+  KNOWLEDGE_STORE_DIR: "/tmp/knowledge-data"
