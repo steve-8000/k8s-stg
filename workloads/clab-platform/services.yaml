@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: api-gateway
-          image: docker.io/clab/api-gateway:v4
+          image: docker.io/clab/api-gateway:v5
           imagePullPolicy: Never
           ports:
             - containerPort: 4000
@@ -56,21 +56,21 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mission-service
+  name: orchestrator
   namespace: clab-platform
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: mission-service
+      app: orchestrator
   template:
     metadata:
       labels:
-        app: mission-service
+        app: orchestrator
     spec:
       containers:
-        - name: mission-service
-          image: docker.io/clab/mission-service:v1
+        - name: orchestrator
+          image: docker.io/clab/orchestrator:v2
           imagePullPolicy: Never
           ports:
             - containerPort: 4001
@@ -97,11 +97,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: mission-service
+  name: orchestrator
   namespace: clab-platform
 spec:
   selector:
-    app: mission-service
+    app: orchestrator
   ports:
     - port: 4001
       targetPort: 4001
@@ -124,7 +124,7 @@ spec:
     spec:
       containers:
         - name: runtime-manager
-          image: docker.io/clab/runtime-manager:v1
+          image: docker.io/clab/runtime-manager:v2
           imagePullPolicy: Never
           ports:
             - containerPort: 4002
@@ -172,7 +172,7 @@ spec:
     spec:
       containers:
         - name: browser-service
-          image: docker.io/clab/browser-service:v1
+          image: docker.io/clab/browser-service:v2
           imagePullPolicy: Never
           ports:
             - containerPort: 4005
@@ -220,7 +220,7 @@ spec:
     spec:
       containers:
         - name: review-service
-          image: docker.io/clab/review-service:v1
+          image: docker.io/clab/review-service:v2
           imagePullPolicy: Never
           ports:
             - containerPort: 4006
@@ -268,7 +268,7 @@ spec:
     spec:
       containers:
         - name: knowledge-service
-          image: docker.io/clab/knowledge-service:v1
+          image: docker.io/clab/knowledge-service:v2
           imagePullPolicy: Never
           ports:
             - containerPort: 4007
