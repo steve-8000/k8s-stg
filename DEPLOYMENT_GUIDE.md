@@ -35,7 +35,7 @@ k8s-stg/
 │   ├── cert-manager-resources.yaml  # App: ClusterIssuer (sync-wave: -2)
 │   ├── monitoring.yaml           # App: prometheus+grafana (sync-wave: -1)
 │   ├── argocd-ingress.yaml       # App: ArgoCD ingress (sync-wave: -1)
-│   └── workloads-appset.yaml     # ApplicationSet: workloads/* 자동 감지
+│   └── workloads-appset.yaml     # ApplicationSet: workloads/* 감지 후 Application 생성
 │
 ├── platform/                     # 인프라 서비스 (Helm wrapper charts)
 │   ├── ingress-nginx/
@@ -53,9 +53,9 @@ k8s-stg/
 
 ## 3. 워크로드 배포 방법 (핵심)
 
-### 자동 감지 원리
+### 감지 원리
 
-`argocd-config/workloads-appset.yaml`에 정의된 **ApplicationSet**이 `workloads/*` 디렉토리를 자동으로 스캔합니다. 새 디렉토리를 만들고 `git push`하면 ArgoCD가 자동으로 Application을 생성하고 배포합니다.
+`argocd-config/workloads-appset.yaml`에 정의된 **ApplicationSet**이 `workloads/*` 디렉토리를 스캔합니다. 새 디렉토리를 만들고 `git push`하면 ArgoCD가 Application을 생성하지만, 실제 배포는 수동 sync가 필요합니다.
 
 - 디렉토리 이름 = ArgoCD Application 이름 = Kubernetes Namespace 이름
 - 별도의 ArgoCD Application YAML을 작성할 필요 없음
@@ -217,7 +217,7 @@ cd /Users/steve/k8s-stg
 git add workloads/<app-name>/
 git commit -m "Deploy <app-name>"
 git push origin main
-# 3. 끝. ArgoCD가 자동으로 감지하여 배포 (약 1~3분)
+# 3. ArgoCD가 감지해 Application을 생성하면 수동으로 sync
 ```
 
 ---
@@ -279,9 +279,6 @@ spec:
     server: https://kubernetes.default.svc
     namespace: <target-namespace>
   syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
@@ -325,7 +322,7 @@ kubectl logs -n <app-name> deployment/<app-name>
 cd /Users/steve/k8s-stg
 rm -rf workloads/<app-name>/
 git add -A && git commit -m "Remove <app-name>" && git push
-# ArgoCD가 자동으로 Application과 모든 리소스를 정리 (prune: true)
+# Application 삭제 후 필요 시 ArgoCD에서 수동 prune/sync로 정리
 ```
 
 ---
