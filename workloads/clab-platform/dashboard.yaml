@@ -15,21 +15,29 @@ spec:
     spec:
       containers:
         - name: dashboard
-          image: clab/dashboard:v4
+          image: clab/dashboard:v5
           imagePullPolicy: Never
           ports:
             - containerPort: 3000
           env:
             - name: PORT
               value: "3000"
-            - name: NEXT_PUBLIC_API_URL
-              value: "http://api-gateway:4000"
+            - name: CONTROL_PLANE_URL
+              value: "http://control-plane.clab.svc.cluster.local:8000"
+            - name: KNOWLEDGE_URL
+              value: "http://knowledge-service.clab.svc.cluster.local:4007"
           readinessProbe:
             httpGet:
               path: /
               port: 3000
             initialDelaySeconds: 5
             periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 15
           resources:
             requests:
               cpu: 50m
@@ -58,6 +66,7 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
 spec:
   ingressClassName: nginx
   tls:
@@ -75,17 +84,3 @@ spec:
                 name: dashboard
                 port:
                   number: 3000
-          - path: /v1
-            pathType: Prefix
-            backend:
-              service:
-                name: api-gateway
-                port:
-                  number: 4000
-          - path: /health
-            pathType: Prefix
-            backend:
-              service:
-                name: api-gateway
-                port:
-                  number: 4000
