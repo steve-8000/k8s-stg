@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: speedpoly-web
+  namespace: speedpoly
+  labels:
+    app.kubernetes.io/name: speedpoly-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: speedpoly-web
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: speedpoly-web
+    spec:
+      containers:
+        - name: speedpoly-web
+          image: docker.io/library/speedpoly-web:v6
+          imagePullPolicy: Never
+          ports:
+            - name: http
+              containerPort: 3000
+          volumeMounts:
+            - name: engine-sock
+              mountPath: /tmp
+          readinessProbe:
+            httpGet:
+              path: /api/snapshot
+              port: 3000
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/snapshot
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+      volumes:
+        - name: engine-sock
+          hostPath:
+            path: /tmp
+            type: Directory
