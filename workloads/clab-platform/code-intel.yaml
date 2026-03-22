@@ -19,7 +19,7 @@ spec:
           command: ["sh", "-c", "until pg_isready -h postgres -U clab; do sleep 2; done"]
       containers:
         - name: code-intel
-          image: clab/code-intel:v1
+          image: clab/code-intel:v6
           imagePullPolicy: Never
           ports:
             - containerPort: 4010
@@ -44,11 +44,11 @@ spec:
             periodSeconds: 15
           resources:
             requests:
-              cpu: 50m
-              memory: 64Mi
+              cpu: 200m
+              memory: 512Mi
             limits:
-              cpu: 250m
-              memory: 256Mi
+              cpu: 2000m
+              memory: 4Gi
 ---
 apiVersion: v1
 kind: Service
