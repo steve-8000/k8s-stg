@@ -124,7 +124,7 @@ spec:
     spec:
       containers:
         - name: runtime-manager
-          image: docker.io/clab/runtime-manager:v4
+          image: docker.io/clab/runtime-manager:v2
           imagePullPolicy: Never
           ports:
             - containerPort: 4002
