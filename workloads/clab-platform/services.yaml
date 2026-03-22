@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: api-gateway
-          image: docker.io/clab/api-gateway:v7
+          image: docker.io/clab/api-gateway:v8
           imagePullPolicy: Never
           ports:
             - containerPort: 4000
@@ -70,7 +70,7 @@ spec:
     spec:
       containers:
         - name: orchestrator
-          image: docker.io/clab/orchestrator:v5
+          image: docker.io/clab/orchestrator:v6
           imagePullPolicy: Never
           ports:
             - containerPort: 4001
@@ -124,7 +124,7 @@ spec:
     spec:
       containers:
         - name: runtime-manager
-          image: docker.io/clab/runtime-manager:v3
+          image: docker.io/clab/runtime-manager:v4
           imagePullPolicy: Never
           ports:
             - containerPort: 4002
@@ -220,7 +220,7 @@ spec:
     spec:
       containers:
         - name: review-service
-          image: docker.io/clab/review-service:v5
+          image: docker.io/clab/review-service:v6
           imagePullPolicy: Never
           ports:
             - containerPort: 4006
@@ -268,7 +268,7 @@ spec:
     spec:
       containers:
         - name: knowledge-service
-          image: docker.io/clab/knowledge-service:v4
+          image: docker.io/clab/knowledge-service:v5
           imagePullPolicy: Never
           ports:
             - containerPort: 4007
