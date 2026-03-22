@@ -77,7 +77,7 @@ spec:
     spec:
       containers:
         - name: knowledge-service
-          image: docker.io/clab/knowledge-service:v7
+          image: docker.io/clab/knowledge-service:v8
           imagePullPolicy: Never
           ports:
             - containerPort: 4007
