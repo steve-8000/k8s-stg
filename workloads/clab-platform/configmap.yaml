@@ -8,4 +8,8 @@ data:
   NATS_URL: "nats://nats:4222"
   NODE_ENV: "production"
   LOG_LEVEL: "info"
+  MISSION_SERVICE_URL: "http://orchestrator:4001"
+  RUNTIME_MANAGER_URL: "http://runtime-manager:4002"
+  REVIEW_SERVICE_URL: "http://review-service:4006"
+  KNOWLEDGE_SERVICE_URL: "http://knowledge-service:4007"
   KNOWLEDGE_STORE_DIR: "/tmp/knowledge-data"
