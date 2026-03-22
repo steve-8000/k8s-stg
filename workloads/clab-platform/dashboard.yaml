@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: dashboard
-          image: clab/dashboard:v5
+          image: clab/dashboard:v8
           imagePullPolicy: Never
           ports:
             - containerPort: 3000
@@ -23,9 +23,11 @@ spec:
             - name: PORT
               value: "3000"
             - name: CONTROL_PLANE_URL
-              value: "http://control-plane.clab.svc.cluster.local:8000"
+              value: "http://control-plane:8000"
             - name: KNOWLEDGE_URL
-              value: "http://knowledge-service.clab.svc.cluster.local:4007"
+              value: "http://knowledge-service:4007"
+            - name: CODE_INTEL_URL
+              value: "http://code-intel:4010"
           readinessProbe:
             httpGet:
               path: /

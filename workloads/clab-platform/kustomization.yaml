@@ -7,6 +7,6 @@ resources:
   - namespace.yaml
   - configmap.yaml
   - postgres.yaml
-  - nats.yaml
   - services.yaml
   - dashboard.yaml
+  - code-intel.yaml

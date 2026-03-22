@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: code-intel
+  namespace: clab-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: code-intel
+  template:
+    metadata:
+      labels:
+        app: code-intel
+    spec:
+      initContainers:
+        - name: wait-postgres
+          image: postgres:16-alpine
+          command: ["sh", "-c", "until pg_isready -h postgres -U clab; do sleep 2; done"]
+      containers:
+        - name: code-intel
+          image: clab/code-intel:v1
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 4010
+          env:
+            - name: CODE_INTEL_DB_URL
+              value: "postgresql://clab:clab-stg-pass@postgres:5432/clab"
+            - name: CODE_INTEL_PORT
+              value: "4010"
+            - name: PYTHONPATH
+              value: "/app:/app/packages"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 4010
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 4010
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: code-intel
+  namespace: clab-platform
+spec:
+  selector:
+    app: code-intel
+  ports:
+    - port: 4010
+      targetPort: 4010
