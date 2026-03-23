@@ -132,3 +132,44 @@ spec:
   resources:
     requests:
       storage: 5Gi
+---
+# --- FalkorDB (Graph DB for Code Intelligence) ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: falkordb
+  namespace: clab-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: falkordb
+  template:
+    metadata:
+      labels:
+        app: falkordb
+    spec:
+      containers:
+        - name: falkordb
+          image: falkordb/falkordb:latest
+          ports:
+            - containerPort: 6379
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: falkordb
+  namespace: clab-platform
+spec:
+  selector:
+    app: falkordb
+  ports:
+    - port: 6379
+      targetPort: 6379
