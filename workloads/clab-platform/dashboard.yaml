@@ -89,13 +89,6 @@ spec:
                 name: code-intel
                 port:
                   number: 4010
-          - path: /ws(/|$)(.*)
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: control-plane
-                port:
-                  number: 8000
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -115,6 +108,13 @@ spec:
     - host: ai.clab.one
       http:
         paths:
+          - path: /ws
+            pathType: Prefix
+            backend:
+              service:
+                name: control-plane
+                port:
+                  number: 8000
           - path: /
             pathType: Prefix
             backend:
