@@ -77,7 +77,7 @@ spec:
     spec:
       containers:
         - name: knowledge-service
-          image: docker.io/clab/knowledge-service:v10
+          image: docker.io/clab/knowledge-service:v12
           imagePullPolicy: Never
           ports:
             - containerPort: 4007
@@ -93,6 +93,9 @@ spec:
               port: 4007
             initialDelaySeconds: 3
             periodSeconds: 5
+          volumeMounts:
+            - name: knowledge-data
+              mountPath: /tmp/knowledge-data
           resources:
             requests:
               cpu: 50m
@@ -100,6 +103,10 @@ spec:
             limits:
               cpu: 250m
               memory: 256Mi
+      volumes:
+        - name: knowledge-data
+          persistentVolumeClaim:
+            claimName: knowledge-data
 ---
 apiVersion: v1
 kind: Service
@@ -112,3 +119,16 @@ spec:
   ports:
     - port: 4007
       targetPort: 4007
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: knowledge-data
+  namespace: clab-platform
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 5Gi

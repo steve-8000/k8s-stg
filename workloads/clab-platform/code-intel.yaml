@@ -30,7 +30,7 @@ spec:
           command: ["sh", "-c", "until pg_isready -h postgres -U clab; do sleep 2; done"]
       containers:
         - name: code-intel
-          image: clab/code-intel:v8
+          image: clab/code-intel:v12
           imagePullPolicy: Never
           ports:
             - containerPort: 4010
