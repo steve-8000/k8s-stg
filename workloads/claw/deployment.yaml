@@ -19,6 +19,8 @@ spec:
       labels:
         app.kubernetes.io/name: claw
         app.kubernetes.io/instance: claw-stg
+      annotations:
+        claw.clab.one/config-revision: "ollama-v1"
     spec:
       automountServiceAccountToken: false
       securityContext:
@@ -72,6 +74,8 @@ spec:
               value: /home/node/.openclaw
             - name: NODE_ENV
               value: production
+            - name: OLLAMA_API_KEY
+              value: ollama-local
             - name: OPENCLAW_GATEWAY_TOKEN
               valueFrom:
                 secretKeyRef:

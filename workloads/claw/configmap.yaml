@@ -8,6 +8,33 @@ metadata:
 data:
   openclaw.json: |
     {
+      "models": {
+        "providers": {
+          "ollama": {
+            "baseUrl": "http://219.255.103.189:11434",
+            "apiKey": "ollama-local",
+            "api": "ollama",
+            "models": [
+              {
+                "id": "qwen35-opus-distilled-openclaw:latest",
+                "name": "qwen35-opus-distilled-openclaw",
+                "reasoning": false,
+                "input": [
+                  "text"
+                ],
+                "cost": {
+                  "input": 0,
+                  "output": 0,
+                  "cacheRead": 0,
+                  "cacheWrite": 0
+                },
+                "contextWindow": 65536,
+                "maxTokens": 8192
+              }
+            ]
+          }
+        }
+      },
       "gateway": {
         "mode": "local",
         "bind": "lan",
@@ -27,7 +54,10 @@ data:
       },
       "agents": {
         "defaults": {
-          "workspace": "~/.openclaw/workspace"
+          "workspace": "~/.openclaw/workspace",
+          "model": {
+            "primary": "ollama/qwen35-opus-distilled-openclaw:latest"
+          }
         },
         "list": [
           {
