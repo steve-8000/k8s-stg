@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: dashboard
-          image: clab/dashboard:v26
+          image: clab/dashboard:v27
           imagePullPolicy: Never
           ports:
             - containerPort: 3000
